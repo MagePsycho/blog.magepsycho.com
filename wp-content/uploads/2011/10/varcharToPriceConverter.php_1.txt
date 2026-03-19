@@ -1,0 +1,90 @@
+<?php
+/**
+ * @author 		MagePsycho <info@magepsycho.com>
+ * @website     http://www.magepsycho.com
+ *
+ */
+$mageFilename = 'app/Mage.php';
+require_once $mageFilename;
+Mage::setIsDeveloperMode(true);
+ini_set('display_errors', 1);
+umask(0);
+Mage::app('admin');
+Mage::register('isSecureArea', 1);
+
+# EDIT HERE...Note the single quotes inside the double quotes. This is necessary unless you modify the function yourself
+# Note that these attribute codes are those attributes whose type is to be changed.
+$_attributeCodes = array("'shipping_cost_with_tax'", "'shipping_cost_without_tax'");
+
+function copyVarcharToDecimal(){
+	$connection			= _getConnection('core_write');
+	$attributeIds		= (string) implode(',', _getAttributeIds());
+	$entityTypeId		= (int) _getEntityTypeId();
+	$sql				= 'SELECT * FROM ' . _getTableName('catalog_product_entity_varchar') . ' WHERE attribute_id IN ('.$attributeIds.') AND entity_type_id = '.$entityTypeId;
+	$rows				= $connection->fetchAll($sql);
+	$insertCount		= 1;
+	$deleteCount		= 1;
+	$insertOutput		= '';
+	$deleteOutput		= '';
+	foreach($rows as $row){
+		$checkIfDecimalValueExists = _checkIfDecimalValueExists($row);
+		if(!$checkIfDecimalValueExists){
+			$sql = 'INSERT INTO ' . _getTableName('catalog_product_entity_decimal') . ' (`entity_type_id`,`attribute_id`,`store_id`,`entity_id`,`value`)
+					VALUES (?,?,?,?,?)';
+			$price = $row['value'];
+			$price = trim(str_replace(',', '.', $price));
+			$connection->query($sql, array($row['entity_type_id'], $row['attribute_id'], $row['store_id'], $row['entity_id'], $price));
+			$insertOutput .= $insertCount . '> INSERTED::' . $connection->lastInsertId() . ' :: ' .$row['value'] . ' => ' . $price . '<br />';
+			$insertCount++;
+		}
+		$sql = 'DELETE FROM ' . _getTableName('catalog_product_entity_varchar') . ' WHERE value_id = ?';
+		$connection->query($sql, $row['value_id']);
+		$deleteOutput .= $deleteCount . '> DELETED::'.$row['value_id'].'<br />';
+		$deleteCount++;
+	}
+	echo '=================================================<br />';
+	echo '<strong>INSERTED</strong><br />';
+	echo $insertOutput;
+	echo '=================================================<br />';
+	echo '=================================================<br />';
+	echo '<strong>DELETED</strong><br />';
+	echo $deleteOutput;
+	echo '=================================================<br />';
+}
+
+function _getTableName($tableName){
+	return Mage::getSingleton('core/resource')->getTableName($tableName);
+}
+
+function _getConnection($type = 'core_read'){
+	return Mage::getSingleton('core/resource')->getConnection($type);
+}
+
+function _getAttributeIds(){
+	global $_attributeCodes;
+	$attributeCodes = (string) implode(',', $_attributeCodes);
+	$connection = _getConnection('core_read');
+	$sql = "SELECT attribute_id
+			FROM " . _getTableName('eav_attribute') . "
+			WHERE attribute_code
+			IN (
+				" . $attributeCodes . "
+			)";
+	return $connection->fetchCol($sql);
+}
+
+function _getEntityTypeId(){
+	$connection = _getConnection('core_read');
+	$sql		= "SELECT entity_type_id FROM " . _getTableName('eav_entity_type') . " WHERE entity_type_code = 'catalog_product'";
+	return $connection->fetchOne($sql);
+}
+
+function _checkIfDecimalValueExists($row){
+	$connection = _getConnection('core_write');
+	$sql		= 'SELECT COUNT(*) FROM ' . _getTableName('catalog_product_entity_decimal') . ' WHERE attribute_id = ? AND entity_type_id = ? AND store_id = ? AND entity_id = ?';
+	$result		= $connection->fetchOne($sql, array($row['attribute_id'], $row['entity_type_id'], $row['store_id'], $row['entity_id']));
+	return $result > 0 ? true : false;
+}
+
+#simply call as:
+copyVarcharToDecimal();
