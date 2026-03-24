@@ -59,8 +59,9 @@ class Themer {
         $directories = new \DirectoryIterator($this->path);
 
         foreach( $directories as $fileinfo ) {
-            if ( $fileinfo->isDot() || $fileinfo->isFile() )
+            if ( $fileinfo->isDot() || $fileinfo->isFile() ) {
                 continue;
+            }
             $this->load_theme($fileinfo->getPathName());
         }
 
@@ -81,11 +82,24 @@ class Themer {
      * @since   5.0.0
      * @param   string  $path   Path to theme folder
      */
-    private function load_theme($path)
+    private function load_theme(string $path)
     {
+        /** @TODO Looks like this entire code block could use a refactor */
+        $override_folder = get_stylesheet_directory() . '/wordpress-popular-posts/themes';
+        $theme_override = false;
         $theme_folder = is_string($path) && is_dir($path) && is_readable($path) ? basename($path) : null;
-        $theme_folder = $theme_folder ? preg_replace("/[^a-z0-9\_\-\.]/i", '', $theme_folder) : null;
+        $theme_folder = $theme_folder ? preg_replace('/[^a-z0-9\_\-]/i', '', $theme_folder) : null;
         $theme_path = $theme_folder ? $path : null;
+
+        // Override from WP theme
+        if (
+            $theme_folder
+            && @file_exists($override_folder . '/' . $theme_folder . '/style.css')
+            && @file_exists($override_folder . '/' . $theme_folder . '/config.json')
+        ) {
+            $theme_override = true;
+            $theme_path = $override_folder  . '/' . $theme_folder;
+        }
 
         if (
             $theme_path
@@ -96,10 +110,14 @@ class Themer {
             && file_exists($theme_path . '/config.json')
             && file_exists($theme_path . '/style.css')
         ) {
-            $str = file_get_contents($theme_path . '/config.json');
+            $str = file_get_contents($theme_path . '/config.json'); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- We're loading a local file
             $json = json_decode($str, true);
 
             if ( $this->is_valid_config($json) ) {
+                if ( $theme_override ) {
+                    $json['name'] .= ' (override)';
+                }
+
                 $this->themes[$theme_folder] = [
                     'json' => $json,
                     'path' => $theme_path
@@ -126,7 +144,7 @@ class Themer {
      * @param   string  $theme
      * @return  array|bool
      */
-    public function get_theme($theme)
+    public function get_theme(string $theme)
     {
         return isset($this->themes[$theme]) ? $this->themes[$theme] : false;
     }
@@ -138,7 +156,7 @@ class Themer {
      * @param   array
      * @return  bool
      */
-    public function is_valid_config($json = [])
+    public function is_valid_config(array $json)
     {
         return is_array($json) && ! empty($json) && isset($json['name']) && isset($json['config']) && is_array($json['config']);
     }

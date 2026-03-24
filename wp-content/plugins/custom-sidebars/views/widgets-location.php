@@ -27,18 +27,17 @@ if ( ! function_exists( '_show_replaceable' ) ) {
 ?>
     <div
         class="cs-replaceable <?php echo esc_attr( $sb_id . $class ); ?>"
-        data-lbl-used="<?php _e( 'Replaced by another sidebar:', 'custom-sidebars' ); ?>"
+        data-lbl-used="<?php esc_html_e( 'Replaced by another sidebar:', 'custom-sidebars' ); ?>"
         >
         <label for="<?php echo esc_attr( $inp_id ); ?>">
             <input type="checkbox"
                 id="<?php echo esc_attr( $inp_id ); ?>"
                 class="detail-toggle"
                 />
-<?php printf(
-	__( 'As <strong>%1$s</strong> for selected %2$s', 'custom-sidebars' ),
-	$sidebar['name'],
-	$cat_name
-); ?>
+<?php 
+/* translators: %1$s is replaced with the sidebar name, %1$s is replaced with the category name */
+CustomSidebars::wp_kses_wf(sprintf(__( 'As <strong>%1$s</strong> for selected %2$s', 'custom-sidebars' ), esc_attr($sidebar['name']), esc_attr($cat_name))); 
+?>
         </label>
         <div class="details">
             <select
@@ -47,10 +46,8 @@ if ( ! function_exists( '_show_replaceable' ) ) {
                 name="<?php echo esc_attr( $inp_name ); ?>[]"
                 multiple="multiple"
                 placeholder="<?php echo esc_attr(
-					sprintf(
-						__( 'Click here to pick available %1$s', 'custom-sidebars' ),
-						$cat_name
-					)
+                    /* translators: %s the category name */
+					sprintf(__( 'Click here to pick available %1$s', 'custom-sidebars' ), $cat_name)
 				); ?>"
             >
             </select>
@@ -72,20 +69,17 @@ if ( ! function_exists( '_show_replaceable' ) ) {
 	<p class="message unique-post">
 		<i class="dashicons dashicons-info light"></i>
 		<?php
-		printf(
-			__(
-				'To attach this sidebar to a unique Post or Page please visit ' .
-				'that <a href="%1$s">Post</a> or <a href="%2$s">Page</a> & set it ' .
-				'up via the sidebars metabox.', 'custom-sidebars'
-			),
+		CustomSidebars::wp_kses_wf(sprintf(
+            /* translators: %1$s is replaced with the URL to create a Post, %2$s is replaced with the URL to create a Page */
+			__('To attach this sidebar to a unique Post or Page please visit that <a href="%1$s">Post</a> or <a href="%2$s">Page</a> & set it up via the sidebars metabox.', 'custom-sidebars'),
 			admin_url( 'edit.php' ),
 			admin_url( 'edit.php?post_type=page' )
-		);
+		));
 		?>
 	</p>
 
 <div class="hidden">
-	<p class="message no-sidebars"><?php _e( 'There are no replaceable sidebars. Please allow at least one as replaceable.', 'custom-sidebars' ); ?></p>
+	<p class="message no-sidebars"><?php esc_html_e( 'There are no replaceable sidebars. Please allow at least one as replaceable.', 'custom-sidebars' ); ?></p>
 </div>
 	<?php
 	/**
@@ -95,11 +89,11 @@ if ( ! function_exists( '_show_replaceable' ) ) {
 	?>
 	<div class="wpmui-box">
 		<h3>
-			<a href="#" class="toggle" title="<?php _e( 'Click to toggle', 'custom-sidebars' ); ?>"><br></a>
-			<span><?php _e( 'For all Single Entries matching selected criteria', 'custom-sidebars' ); ?></span>
+			<a href="#" class="toggle" title="<?php esc_html_e( 'Click to toggle', 'custom-sidebars' ); ?>"><br></a>
+			<span><?php esc_html_e( 'For all Single Entries matching selected criteria', 'custom-sidebars' ); ?></span>
 		</h3>
 		<div class="inside">
-			<p><?php _e( 'These replacements will be applied to every single post that matches a certain post type or category.', 'custom-sidebars' ); ?>
+			<p><?php esc_html_e( 'These replacements will be applied to every single post that matches a certain post type or category.', 'custom-sidebars' ); ?>
 
 			<div class="cs-half">
 			<?php
@@ -147,15 +141,15 @@ foreach ( $taxonomies as $taxonomy_slug => $taxonomy ) {
 	?>
 	<div class="wpmui-box closed">
 		<h3>
-			<a href="#" class="toggle" title="<?php _e( 'Click to toggle', 'custom-sidebars' );?>"><br></a>
-			<span><?php _e( 'For Archives', 'custom-sidebars' ); ?></span>
+			<a href="#" class="toggle" title="<?php esc_html_e( 'Click to toggle', 'custom-sidebars' );?>"><br></a>
+			<span><?php esc_html_e( 'For Archives', 'custom-sidebars' ); ?></span>
 		</h3>
 		<div class="inside">
-			<p><?php _e( 'These replacements will be applied to Archive Type posts and pages.', 'custom-sidebars' ); ?>
+			<p><?php esc_html_e( 'These replacements will be applied to Archive Type posts and pages.', 'custom-sidebars' ); ?>
 			<h3 class="wpmui-tabs">
-				<a href="#tab-arch" class="tab active"><?php _e( 'Archive Types', 'custom-sidebars' ); ?></a>
-				<a href="#tab-catg" class="tab"><?php _e( 'Category Archives', 'custom-sidebars' ); ?></a>
-				<a href="#tab-aut" class="tab"><?php _e( 'Authors', 'custom-sidebars' ); ?></a>
+				<a href="#tab-arch" class="tab active"><?php esc_html_e( 'Archive Types', 'custom-sidebars' ); ?></a>
+				<a href="#tab-catg" class="tab"><?php esc_html_e( 'Category Archives', 'custom-sidebars' ); ?></a>
+				<a href="#tab-aut" class="tab"><?php esc_html_e( 'Authors', 'custom-sidebars' ); ?></a>
 			</h3>
 			<div class="wpmui-tab-contents">
 				<div id="tab-arch" class="tab active">
@@ -203,11 +197,11 @@ foreach ( $taxonomies as $taxonomy_slug => $taxonomy ) {
 	?>
 	<div class="wpmui-box closed csb-media-screen-width">
 		<h3>
-			<a href="#" class="toggle" title="<?php _e( 'Click to toggle', 'custom-sidebars' ); ?>"><br></a>
-			<span><?php _e( 'For Screen Sizes', 'custom-sidebars' ); ?></span>
+			<a href="#" class="toggle" title="<?php esc_html_e( 'Click to toggle', 'custom-sidebars' ); ?>"><br></a>
+			<span><?php esc_html_e( 'For Screen Sizes', 'custom-sidebars' ); ?></span>
         </h3>
         <div class="inside">
-            <p class="description"><?php _e( 'Those settings do not load unload sidebars, it only hide or show widgets, NOT SIDEBARS, depend on media screen width.', 'custom-sidebars' ); ?></p>
+            <p class="description"><?php esc_html_e( 'Those settings do not load unload sidebars, it only hide or show widgets, NOT SIDEBARS, depend on media screen width.', 'custom-sidebars' ); ?></p>
             <table class="form-table">
                 <thead>
                     <tr>
@@ -237,11 +231,11 @@ foreach ( $taxonomies as $taxonomy_slug => $taxonomy ) {
 	?>
 	<div class="wpmui-box closed cs-3rd-part">
 <h3>
-<a href="#" class="toggle" title="<?php _e( 'Click to toggle', 'custom-sidebars' ); ?>"><br></a>
-<span><?php _e( '3rd party plugins', 'custom-sidebars' ); ?></span>
+<a href="#" class="toggle" title="<?php esc_html_e( 'Click to toggle', 'custom-sidebars' ); ?>"><br></a>
+<span><?php esc_html_e( '3rd party plugins', 'custom-sidebars' ); ?></span>
 </h3>
 <div class="inside">
-<p><?php _e( 'These replacements will be applied to 3rd party plugins.', 'custom-sidebars' ); ?>
+<p><?php esc_html_e( 'These replacements will be applied to 3rd party plugins.', 'custom-sidebars' ); ?>
 
 <h3 class="wpmui-tabs">
 <?php
@@ -281,8 +275,8 @@ foreach ( $integrations as $id => $one ) {
 ?>
 
 	<div class="buttons">
-		<button type="button" class="button-link btn-cancel"><?php _e( 'Cancel', 'custom-sidebars' ); ?></button>
-		<button type="button" class="button-primary btn-save"><?php _e( 'Save Changes', 'custom-sidebars' ); ?></button>
+		<button type="button" class="button-link btn-cancel"><?php esc_html_e( 'Cancel', 'custom-sidebars' ); ?></button>
+		<button type="button" class="button-primary btn-save"><?php esc_html_e( 'Save Changes', 'custom-sidebars' ); ?></button>
     </div>
     <?php wp_nonce_field( 'custom-sidebars-set-location' ); ?>
 </form>

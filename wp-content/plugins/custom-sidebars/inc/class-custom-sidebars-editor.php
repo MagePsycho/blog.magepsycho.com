@@ -120,7 +120,7 @@ class CustomSidebarsEditor extends CustomSidebars {
 		$view_file = '';
 		$sb_id = '';
 		if ( isset( $_POST['sb'] ) ) {
-			$sb_id = $_POST['sb'];
+			$sb_id = sanitize_key($_POST['sb']);
 		}
 		switch ( $action ) {
 			case 'get':
@@ -146,6 +146,7 @@ class CustomSidebarsEditor extends CustomSidebars {
 				__( 'You do not have permission for this', 'custom-sidebars' )
 			);
 		} else {
+            $sidebar_data = map_deep( $_POST, 'sanitize_text_field' );
 			switch ( $action ) {
 				// Return details for the specified sidebar.
 				case 'get':
@@ -153,8 +154,8 @@ class CustomSidebarsEditor extends CustomSidebars {
 				 * check nonce
 				 */
 					if (
-					! isset( $_POST['_wpnonce'] )
-					|| ! wp_verify_nonce( $_POST['_wpnonce'], 'custom-sidebars-get' )
+					! isset( $sidebar_data['_wpnonce'] )
+					|| ! wp_verify_nonce( $sidebar_data['_wpnonce'], 'custom-sidebars-get' )
 					) {
 						$req = self::req_err(
 							$req,
@@ -174,12 +175,12 @@ class CustomSidebarsEditor extends CustomSidebars {
 				break;
 				// Save or insert the specified sidebar.
 				case 'save':
-					$req = $this->save_item( $req, $_POST );
+					$req = $this->save_item( $req, $sidebar_data );
 				break;
 				// Delete the specified sidebar.
 				case 'delete':
 					$req->sidebar = $sb_data;
-					$req = $this->delete_item( $req, $_POST );
+					$req = $this->delete_item( $req, $sidebar_data );
 				break;
 				// Get the location data.
 				case 'get-location':
@@ -293,24 +294,20 @@ class CustomSidebarsEditor extends CustomSidebars {
 				$name = sprintf( '%s_%s', $prefix, $sufix );
 				$sidebar[ $name ] = '';
 				if ( isset( $_POST[ $name ] ) ) {
-					$sidebar[ $name ] = stripslashes( trim( $_POST[ $name ] ) );
+					$sidebar[ $name ] = stripslashes( trim( sanitize_text_field($_POST[ $name ]) ) );
 				}
 			}
 		}
 		if ( 'insert' == $action ) {
 			$sidebars[] = $sidebar;
-			$req->message = sprintf(
-				__( 'Created new sidebar <strong>%1$s</strong>', 'custom-sidebars' ),
-				esc_html( $sidebar['name'] )
-			);
+            /* translators: %1$s is replaced with the sidebar name */
+			$req->message = sprintf(__( 'Created new sidebar <strong>%1$s</strong>', 'custom-sidebars' ),esc_html( $sidebar['name'] ));
 		} else {
 			$found = false;
 			foreach ( $sidebars as $ind => $item ) {
 				if ( $item['id'] == $sb_id ) {
-					$req->message = sprintf(
-						__( 'Updated sidebar <strong>%1$s</strong>', 'custom-sidebars' ),
-						esc_html( $sidebar['name'] )
-					);
+                    /* translators: %1$s is replaced with the sidebar name */
+					$req->message = sprintf(__( 'Updated sidebar <strong>%1$s</strong>', 'custom-sidebars' ),esc_html( $sidebar['name'] ));
 					$sidebars[ $ind ] = $sidebar;
 					$found = true;
 					break;
@@ -383,10 +380,8 @@ class CustomSidebarsEditor extends CustomSidebars {
 		foreach ( $sidebars as $ind => $item ) {
 			if ( $item['id'] == $req->id ) {
 				$found = true;
-				$req->message = sprintf(
-					__( 'Deleted sidebar <strong>%1$s</strong>', 'custom-sidebars' ),
-					esc_html( $req->sidebar['name'] )
-				);
+                /* translators: %1$s is replaced with the sidebar name */
+				$req->message = sprintf(__( 'Deleted sidebar <strong>%1$s</strong>', 'custom-sidebars' ),esc_html( $req->sidebar['name'] ));
 				unset( $sidebars[ $ind ] );
 				break;
 			}
@@ -411,7 +406,7 @@ class CustomSidebarsEditor extends CustomSidebars {
 	 * @return object Updated response object.
 	 */
 	private function set_replaceable( $req ) {
-		$state = @$_POST['state'];
+		$state = @sanitize_text_field($_POST['state']);
 		$options = self::get_options();
 		if ( 'true' === $state ) {
 			$req->status = true;
@@ -472,17 +467,21 @@ class CustomSidebarsEditor extends CustomSidebars {
 					/**
 				 * this a legacy and backward compatibility
 				 */
+                    /* translators: %1$s is replaced with the taxonomy name */
 					$archive_type['_tags'] = sprintf( __( '%s Archives', 'custom-sidebars' ), $taxonomy->labels->singular_name );
 				break;
 				case 'category':
+                    /* translators: %1$s is replaced with the taxonomy name */
 					$archive_type[ '_'.$taxonomy->name ] = sprintf( __( '%s Archives', 'custom-sidebars' ), $taxonomy->labels->singular_name );
 				break;
 			}
 		}
 		foreach ( $raw_taxonomies['custom'] as $taxonomy ) {
 			if ( in_array( $taxonomy->labels->singular_name, $default_taxonomies ) ) {
+                /* translators: %1$s is replaced with the taxonomy name */
 				$archive_type[ '_taxonomy_'.$taxonomy->name ] = sprintf( __( '%s Archives', 'custom-sidebars' ), ucfirst( $taxonomy->name ) );
 			} else {
+                /* translators: %1$s is replaced with the taxonomy name */
 				$archive_type[ '_taxonomy_'.$taxonomy->name ] = sprintf( __( '%s Archives', 'custom-sidebars' ), $taxonomy->labels->singular_name );
 			}
 		}
@@ -495,7 +494,7 @@ class CustomSidebarsEditor extends CustomSidebars {
 			array(
 				'order_by' => 'display_name',
 				'fields' => array( 'ID', 'display_name' ),
-				'who' => 'authors',
+				'role' => 'author',
 			)
 		);
 		// Collect required data for all posttypes.
@@ -526,10 +525,8 @@ class CustomSidebarsEditor extends CustomSidebars {
 				$label = __( 'Post Index', 'custom-sidebars' );
 			} else {
 				if ( ! $item->has_archive ) { continue; }
-				$label = sprintf(
-					__( '%1$s Archives', 'custom-sidebars' ),
-					$item->labels->singular_name
-				);
+                /* translators: %1$s is replaced with the post type name */
+				$label = sprintf(__( '%1$s Archives', 'custom-sidebars' ),$item->labels->singular_name);
 			}
 			$sel_archive = @$defaults['post_type_archive'][ $item->name ];
 			$archives[ $item->name ] = array(
@@ -555,8 +552,10 @@ class CustomSidebarsEditor extends CustomSidebars {
 				isset( $defaults['taxonomies_archive'] )
 				&& isset( $defaults['taxonomies_archive'][ $taxonomy ] )
 			) {
+                /* translators: %1$s is replaced with the taxonomy name */
 				$name  = sprintf( __( '%s Archives', 'custom-sidebars' ), $t->labels->singular_name );
 				if ( in_array( $t->labels->singular_name, $default_taxonomies ) ) {
+                    /* translators: %1$s is replaced with the taxonomy name */
 					$name = sprintf( __( '%s Archives', 'custom-sidebars' ), ucfirst( $taxonomy ) );
 				}
 				$sel_archive = $defaults['taxonomies_archive'][ $taxonomy ];
@@ -573,11 +572,9 @@ class CustomSidebarsEditor extends CustomSidebars {
 		 * @since 3.1.4
 		 */
 		$allowed = get_option( $this->custom_taxonomies_name, array() );
-		$args = array(
-			'hide_empty' => true,
-		);
+		
 		foreach ( $allowed as $key ) {
-			$t = get_terms( $key, $args );
+			$t = get_terms( $key );
 			$terms = array();
 			foreach ( $t as $item ) {
 				$sel_single = $sel_archive = array();
@@ -611,6 +608,7 @@ class CustomSidebarsEditor extends CustomSidebars {
 				if ( isset( $defaults['category_archive'] ) ) {
 					$sel_archive = $defaults['category_archive'];
 					$archives['_category'] = array(
+                        /* translators: %1$s is replaced with the category name */
 						'name' => sprintf( __( '%s Archives', 'custom-sidebars' ), $t->labels->singular_name ),
 						'archive' => self::get_array( $sel_archive ),
 					);
@@ -666,9 +664,11 @@ class CustomSidebarsEditor extends CustomSidebars {
 		/**
 		 * check nonce
 		 */
+        $sidebar_data = map_deep( $_POST, 'sanitize_text_field' );
+        
 		if (
-			! isset( $_POST['_wpnonce'] )
-			|| ! wp_verify_nonce( $_POST['_wpnonce'], 'custom-sidebars-set-location' )
+			! isset( $sidebar_data['_wpnonce'] )
+			|| ! wp_verify_nonce( $sidebar_data['_wpnonce'], 'custom-sidebars-set-location' )
 		) {
 			return self::req_err(
 				$req,
@@ -683,7 +683,7 @@ class CustomSidebarsEditor extends CustomSidebars {
 		$raw_taxonomies = array(
 			'custom' => self::get_taxonomies( 'names', false ),
 		);
-		foreach ( $_POST as $key => $value ) {
+		foreach ( $sidebar_data as $key => $value ) {
 			if ( strlen( $key ) > 8 && '___cs___' == substr( $key, 0, 8 ) ) {
 				list( $prefix, $id ) = explode( '___', substr( $key, 8 ) );
 				if ( ! isset( $data[ $prefix ] ) ) {
@@ -705,7 +705,7 @@ class CustomSidebarsEditor extends CustomSidebars {
 			array(
 				'order_by' => 'display_name',
 				'fields' => array( 'ID', 'display_name' ),
-				'who' => 'authors',
+				'role' => 'author',
 			)
 		);
 		// == Update the options
@@ -816,7 +816,7 @@ class CustomSidebarsEditor extends CustomSidebars {
 				 */
 				foreach ( $raw_taxonomies['custom'] as $taxonomy ) {
 					$key = '_taxonomy_'.$taxonomy.'_single';
-					$terms = get_terms( $taxonomy, array( 'hide_empty' => false ) );
+					$terms = get_terms( $taxonomy );
 					foreach ( $terms as $term ) {
 						$term_id = $term->term_id;
 						if (
@@ -866,7 +866,7 @@ class CustomSidebarsEditor extends CustomSidebars {
 			&& is_array( $_POST['cs-screen']['minmax'] )
 			&& is_array( $_POST['cs-screen']['size'] )
 		) {
-			$screen_size = $_POST['cs-screen'];
+            $screen_size = map_deep( $_POST['cs-screen'], 'sanitize_text_field' );
 			for ( $i = 0; $i < count( $screen_size['size'] ); $i++ ) {
 				if ( ! empty( $screen_size['size'][ $i ] ) ) {
 					$size[ $screen_size['size'][ $i ] ][ $screen_size['minmax'][ $i ] ] = $screen_size['mode'][ $i ];
@@ -875,10 +875,8 @@ class CustomSidebarsEditor extends CustomSidebars {
 			krsort( $size );
 		}
 		$options['screen'][ $req->id ] = $size;
-		$req->message = sprintf(
-			__( 'Updated sidebar <strong>%1$s</strong> settings.', 'custom-sidebars' ),
-			esc_html( $req->sidebar['name'] )
-		);
+        /* translators: %1$s is replaced with the sidebar name */
+		$req->message = sprintf(__( 'Updated sidebar <strong>%1$s</strong> settings.', 'custom-sidebars' ),	esc_html( $req->sidebar['name'] ));
 		/**
 		 * Allow to change data of locations before save.
 		 *
@@ -1034,7 +1032,7 @@ class CustomSidebarsEditor extends CustomSidebars {
 		if ( ! empty( $sidebars ) ) {
 			foreach ( $sidebars as $sb_id ) {
 				if ( isset( $_POST[ 'cs_replacement_' . $sb_id ] ) ) {
-					$replacement = $_POST[ 'cs_replacement_' . $sb_id ];
+                    $replacement = map_deep( $_POST[ 'cs_replacement_' . $sb_id], 'sanitize_text_field' );
 					if ( ! empty( $replacement ) ) {
 						$data[ $sb_id ] = $replacement;
 					}
@@ -1329,7 +1327,7 @@ class CustomSidebarsEditor extends CustomSidebars {
 		$data = CustomSidebars::get_post_meta( $post_id );
 		foreach ( $this->modifiable as $key ) {
 			$k = sprintf( 'cs_replacement_%s', $key );
-			$value = isset( $_REQUEST[ $k ] )? $_REQUEST[ $k ]:'-';
+			$value = isset( $_REQUEST[ $k ] )? map_deep($_REQUEST[ $k ],'sanitize_text_field'):'-';
 			if ( '-' != $value ) {
 				$update = true;
 				$data[ $key ] = $value;

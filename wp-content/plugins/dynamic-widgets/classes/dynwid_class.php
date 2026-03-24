@@ -7,7 +7,8 @@
  */
 
 	defined('ABSPATH') or die("No script kiddies please!");
-
+	
+	#[AllowDynamicProperties]
 	class dynWid {
 		private $dbtable;
 		public  $device;
@@ -31,7 +32,6 @@
 		public  $userrole;
 		public  $whereami;
 		private $wpdb;
-
 		/**
 		 * dynWid::__construct() Master class
 		 *
@@ -412,8 +412,7 @@
 		 * @return integer
 		 */
 		public function checkWPhead() {
-			$ct = current_theme_info();
-			$headerfile = $ct->template_dir . '/header.php';
+			$headerfile = get_template_directory () . '/header.php';
 			if ( file_exists($headerfile) ) {
 				$buffer = file_get_contents($headerfile);
 				if ( strpos($buffer, 'wp_head()') ) {

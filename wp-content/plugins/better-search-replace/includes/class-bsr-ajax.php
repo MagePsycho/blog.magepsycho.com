@@ -100,29 +100,33 @@ class BSR_AJAX {
 	 */
 	public function process_search_replace() {
 		// Bail if not authorized.
-		if ( ! check_admin_referer( 'bsr_ajax_nonce', 'bsr_ajax_nonce' ) ) {
+		if ( ! BSR_Utils::check_admin_referer( 'bsr_ajax_nonce', 'bsr_ajax_nonce' ) ) {
 			return;
 		}
 
 		// Initialize the DB class.
 		$db   = new BSR_DB();
-		$step = isset( $_POST['bsr_step' ] ) ? absint( $_POST['bsr_step'] ) : 0;
-		$page = isset( $_POST['bsr_page'] ) ? absint( $_POST['bsr_page'] ) : 0;
+		$step = isset( $_REQUEST['bsr_step' ] ) ? absint( $_REQUEST['bsr_step'] ) : 0;
+		$page = isset( $_REQUEST['bsr_page'] ) ? absint( $_REQUEST['bsr_page'] ) : 0;
 
 		// Any operations that should only be performed at the beginning.
 		if ( $step === 0 && $page === 0 ) {
 			$args = array();
 			parse_str( $_POST['bsr_data'], $args );
 
-			// Build the arguements for this run.
+			// Build the arguments for this run.
+			if ( ! isset( $args['select_tables'] ) || ! is_array( $args['select_tables'] ) ) {
+				$args['select_tables'] = array();
+			}
+
 			$args = array(
-				'select_tables' 	=> isset( $args['select_tables'] ) ? $args['select_tables'] : array(),
-				'case_insensitive' 	=> isset( $args['case_insensitive'] ) ? $args['case_insensitive'] : 'off',
-				'replace_guids' 	=> isset( $args['replace_guids'] ) ? $args['replace_guids'] : 'off',
-				'dry_run' 			=> isset( $args['dry_run'] ) ? $args['dry_run'] : 'off',
-				'search_for' 		=> isset( $args['search_for'] ) ? stripslashes( $args['search_for'] ) : '',
-				'replace_with' 		=> isset( $args['replace_with'] ) ? stripslashes( $args['replace_with'] ) : '',
-				'completed_pages' 	=> isset( $args['completed_pages'] ) ? absint( $args['completed_pages'] ) : 0,
+				'select_tables'    => array_map( 'trim', $args['select_tables'] ),
+				'case_insensitive' => isset( $args['case_insensitive'] ) ? $args['case_insensitive'] : 'off',
+				'replace_guids'    => isset( $args['replace_guids'] ) ? $args['replace_guids'] : 'off',
+				'dry_run'          => isset( $args['dry_run'] ) ? $args['dry_run'] : 'off',
+				'search_for'       => isset( $args['search_for'] ) ? stripslashes( $args['search_for'] ) : '',
+				'replace_with'     => isset( $args['replace_with'] ) ? stripslashes( $args['replace_with'] ) : '',
+				'completed_pages'  => isset( $args['completed_pages'] ) ? absint( $args['completed_pages'] ) : 0,
 			);
 
 			$args['total_pages'] = isset( $args['total_pages'] ) ? absint( $args['total_pages'] ) : $db->get_total_pages( $args['select_tables'] );
@@ -149,11 +153,13 @@ class BSR_AJAX {
 
 			// Check if isset() again as the step may have changed since last check.
 			if ( isset( $args['select_tables'][$step] ) ) {
+				$msg_tbl = esc_html( $args['select_tables'][$step] );
+
 				$message = sprintf(
 					__( 'Processing table %d of %d: %s', 'better-search-replace' ),
 					$step + 1,
 					count( $args['select_tables'] ),
-					esc_html( $args['select_tables'][$step] )
+					$msg_tbl
 				);
 			}
 
@@ -198,8 +204,8 @@ class BSR_AJAX {
 	public function append_report( $table, $report, $args ) {
 
 		// Bail if not authorized.
-		if ( ! check_admin_referer( 'bsr_ajax_nonce', 'bsr_ajax_nonce' ) ) {
-			return;
+		if ( ! BSR_Utils::check_admin_referer( 'bsr_ajax_nonce', 'bsr_ajax_nonce' ) ) {
+			return false;
 		}
 
 		// Retrieve the existing transient.

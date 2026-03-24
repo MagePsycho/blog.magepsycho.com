@@ -1,12 +1,13 @@
 <?php
 /**
  * Plugin Name: Dynamic Widgets
- * Plugin URI: http://dynamic-widgets.com/
  * Description: Dynamic Widgets gives you full control on which pages your widgets will appear. It lets you dynamicly show or hide widgets on WordPress pages.
- * Author: Qurl
- * Version: 1.5.14
- * Author URI: http://www.qurl.nl/
- * Tags: widget, widgets, dynamic, sidebar, custom, rules, logic, admin, condition, conditional tags, hide, show, wpml, qtranslate, wpec, buddypress, pods
+ * Version: 1.6.6
+ * Requires at least: 3.0.0
+ * Requires PHP: 5.2.7
+ * Author: vivwebs
+ * Author URI: https://profiles.wordpress.org/vivwebs/
+ * Tags: widget, widgets, dynamic, sidebar, custom, rules, logic, admin, condition, conditional tags, conditional content, hide, show, wpml, qtranslate, wpec, buddypress, pods
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,7 +16,6 @@
  *
  * Released under the GPL v.2, http://www.gnu.org/copyleft/gpl.html
  *
- * @version $Id: dynamic-widgets.php 2032225 2019-02-16 17:53:18Z qurl $
  * @copyright 2017 Jacco Drabbe
  *
  * Thanks to Alexis Nomine for the contribution of the French (fr_FR) language files, several L10N fixes and change of the edit options UI.
@@ -37,6 +37,8 @@
  * Thanks to Mike Epstein to find a vulnerability in the DW settings.
  * Thanks to HANNA instruments for the financial contribution to implement the domain name / server name filter feature.
  * Thanks to WordPress formm user @fjaeker for finding and debugging a problem in the Pages module since WordPress 5.
+ * Thanks to WordPress forum user @sovabarmak for finding and fixing a bug in Pages childs as a result of the previous Pages fix
+ * Thanks to Erwan from WPScan to find a vulnerability in processing the Custom Posts Taxonomy tree.
  *
  *
  * WPML Plugin support via API
@@ -82,8 +84,8 @@
 	define('DW_MODULES', dirname(__FILE__) . '/' . 'mods/');
 	define('DW_PLUGIN', dirname(__FILE__) . '/' . 'plugin/');
 	define('DW_TIME_LIMIT', 86400);				// 1 day
-	define('DW_URL_AUTHOR', 'http://www.qurl.nl');
-	define('DW_VERSION', '1.5.14');
+	define('DW_URL_AUTHOR', 'https://profiles.wordpress.org/vivwebs/');
+	define('DW_VERSION', '1.6.6');
 	define('DW_WPML_API', '/inc/wpml-api.php');			// WPML Plugin support - API file relative to ICL_PLUGIN_PATH
 	define('DW_WPML_ICON', 'img/wpml_icon.png');	// WPML Plugin support - WPML icon
 
@@ -480,7 +482,9 @@
 	function dynwid_admin_dump() {
 		/** @var $DW DynWid */
 		global $DW;
-
+		if(empty($_GET['dynwid_dump']) || !wp_verify_nonce($_GET['dynwid_dump'],'dynwid_dump')){
+			die('busted 5');
+		}
 		header('Content-Description: File Transfer');
 		header('Content-Disposition: attachment; filename=dynwid_dump_' . date('Ymd') . '.txt' );
 		header('Content-Type: text/plain');
@@ -505,6 +509,9 @@
 	 * @since 1.4.0
 	 */
 	function dynwid_admin_wpec_dump() {
+		if(empty($_GET['wpec_dump']) || !wp_verify_nonce($_GET['wpec_dump'],'wpec_dump')){
+			die('busted 4');
+		}
 		$DW = &$GLOBALS['DW'];
 		$wpdb = &$GLOBALS['wpdb'];
 		$dump = array();
@@ -834,8 +841,11 @@
 	 */
 	function dynwid_term_tree() {
 		global $DW;
+		if ( empty($_POST['nonce']) || ! wp_verify_nonce( $_POST['nonce'], 'ajax-nonce' ) ) {
+			die ( 'Busted! 0');
+		}
 		include_once(DW_MODULES . 'custompost_module.php');
-
+		
 		$id = ( isset($_POST['id']) && ! empty($_POST['id']) ) ? sanitize_text_field( $_POST['id'] ) : 0;
 		$name = ( isset($_POST['name']) && ! empty($_POST['name']) ) ? sanitize_text_field( $_POST['name'] ) : '';
 		$prefix = ( isset($_POST['prefix']) && ! empty($_POST['prefix']) ) ? sanitize_text_field( $_POST['prefix'] ) : '';
@@ -860,6 +870,10 @@
 	 */
 	function dynwid_uninstall() {
 		global $wpdb;
+
+		if(empty($_GET['dynwid_uninstall']) || !wp_verify_nonce($_GET['dynwid_uninstall'],'dynwid_uninstall')){
+			die('busted 1');
+		}
 
 		$dbtable = $wpdb->prefix . DW_DB_TABLE;
 

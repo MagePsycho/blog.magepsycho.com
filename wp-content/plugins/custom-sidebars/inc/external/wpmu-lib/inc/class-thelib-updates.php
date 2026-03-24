@@ -244,7 +244,7 @@ class TheLib_Updates extends TheLib  {
 
 		// Create the empty snapshot file.
 		$filename = sanitize_html_class( $file );
-		$filename .= '-' . date( 'Ymd-His' );
+		$filename .= '-' . gmdate( 'Ymd-His' );
 		$ext = '.' . $ext;
 		$i = '';
 		$sep = '';
@@ -437,11 +437,12 @@ class TheLib_Updates extends TheLib  {
 			'<b>Abborting update of %s!</b> '.
 			'Could not create a restore-point [%s]<br />%s',
 			ucwords( $this->plugin ),
-			$err_code,
-			$error
+			esc_html( $err_code ),
+			esc_html( $error )
 		);
 
-		wp_die( $msg );
+		CustomSidebars::wp_kses_wf( $msg );
+        die();
 	}
 
 	/**

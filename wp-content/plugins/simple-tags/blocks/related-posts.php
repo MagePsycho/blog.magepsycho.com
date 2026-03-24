@@ -21,6 +21,23 @@ function st_related_posts_block_init()
         ['wp-blocks', 'wp-element', 'wp-components', 'wp-editor']
     );
 
+    // Register and enqueue frontend styles for block editor
+    wp_register_style(
+        'taxopress-frontend-css',
+        STAGS_URL . '/assets/frontend/css/frontend.css',
+        [],
+        STAGS_VERSION,
+        'all'
+    );
+    add_action('enqueue_block_editor_assets', function () {
+        if (is_admin() && function_exists('get_current_screen')) {
+            $screen = get_current_screen();
+            if ($screen && $screen->is_block_editor()) {
+                wp_enqueue_style('taxopress-frontend-css');
+            }
+        }
+    });
+
     // Register our block, and explicitly define the attributes we accept.
     $relatedposts_data = taxopress_get_relatedpost_data();
 
@@ -62,15 +79,15 @@ function st_related_posts_block_init()
         __('this page.', 'simple-tags')
     );
 
-    $select_desc  = __('Related Posts shortcode are added on Related Post screen', 'simple-tags');
-    $select_label = __('Select related post shortcode', 'simple-tags');
+    //$select_desc  = __('Related Posts shortcode are added on Related Post screen', 'simple-tags');
+    $select_label = __('Select related post', 'simple-tags');
     $panel_title  = __('Related Posts (TaxoPress)', 'simple-tags');
 
     wp_localize_script('st-block-related-posts', 'ST_RELATED_POST', [
         'options'      => $options,
         'panel_title'  => $panel_title,
         'select_label' => $select_label,
-        'select_desc'  => $select_desc
+        //'select_desc'  => $select_desc
     ]);
 
 }

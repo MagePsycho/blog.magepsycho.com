@@ -1,9 +1,10 @@
 === Fixed Widget and Sticky Elements for WordPress ===
-Contributors: webzunft, max-bond, advancedads
+Contributors: advancedads, max-bond
 Tags: fixed widget, sticky widget, sidebar, ads, widget, fixed, sticky, floating, sticky block, adsense
 Requires at least: 5.0
-Tested up to: 5.9
-Stable tag: 6.0.7
+Tested up to: 6.2
+Requires PHP: 7.2
+Stable tag: 6.2.3
 
 More attention and a higher ad performance with fixed sticky widgets.
 
@@ -17,24 +18,9 @@ That's why this option is worthwhile for ads or other elements that visitors sho
 
 * [Manual and demo](https://wpadvancedads.com/fixed-widget-wordpress/)
 
-= Changes in version 6.0.0 =
-
-Version 6.0.0 is a full rewrite of the frontend script. It fixes many edge cases like jumping, reloading, or resizing widgets.
-The rewrite also resolves bad Cumulative Layout Shifts.
-
-Enable "Test new version" under Appearance > Fixed Widget Options.
-
-- the frontend script does not need jQuery anymore
-- removed unneeded options that previously helped resolving edge cases
-- "Stop Elements" and "Custom Fixed Elements" now accept any selector, including IDs, Class, and Type selectors.
-- works with the widget block editor introduced in WordPress 5.8
-- added "stop" option to widget blocks
-
-Please test and [let us know](https://wordpress.org/support/plugin/q2w3-fixed-widget/) if you discover any issues.
-
 = Features =
 
-All the features are free.
+Fixed Widget is completely free of charge.
 
 * **Sticky Widgets** Use the Fixed Widget option on any widget and blocks in the sidebar
 * **Sticky Elements** Choose any element on your site and make it sticky
@@ -43,6 +29,7 @@ All the features are free.
 * **Stop Elements** push sticky elements up when they are scrolling into view
 * **Stop Blocks** defines blocks in your sidebar that push fixed blocks out of the page
 * **Minimum Screen Width** and **Minimum Screen Height** allow you to disable sticky behavior on small screens
+* Written in plain JavaScript for better performance
 
 = Compatibility = 
 
@@ -56,7 +43,7 @@ Theme requirements:
 1. Follow the standard WordPress plugin installation procedure
 2. Activate the plugin through the plugins menu in WordPress
 3. Go to Appearance -> Widgets, enable the "Fixed Widget" option on any active widget
-4. Fine tune plugin parameters on Appearance -> Fixed Widget Options page
+4. Fine tune plugin parameters on Appearance -> Fixed Widget page
 
 == Frequently Asked Questions ==
 
@@ -73,9 +60,13 @@ There are several reasons:
 
 Yes, it is possible to fix more than one widget even if they are located in different sidebars.
 
+= How can I style a fixed element only while it is sticky? =
+
+Fixed elements carry the `FixedWidget__fixed_widget__pinned` class, which allows developers to change the styling only while the element is fixed.
+
 = How to prevent overlapping with the footer? =
 
-Go to WP admin area, Appearance -> Fixed Widget Options. Here you can define the top and bottom margins. Set bottom margin value >= footer height. Check the result, please.
+Go to WP admin area, Appearance -> Fixed Widget. Here you can define the top and bottom margins. Set bottom margin value >= footer height. Check the result, please.
 If your footer height is changing from page to page it is better to use the `Stop ID` option. Here you need to provide the HTML tag ID. The position of that HTML element will determine the margin bottom value. For example, let's take the Twenty Sixteen default theme. The theme's footer container has an ID="colophon". In the `Stop Element Selectors` option I need to enter `#colophon`.
 
 = How to disable the plugin on mobile devices? = 
@@ -90,6 +81,37 @@ Use the options `Minimum Screen Width` and `Minimum Screen Height` to disable st
 3. Fixed Widget option for legacy widgets
 
 == Changelog ==
+
+= 6.2.3 =
+
+- Fix: fixed widget might increase its height when scrolling
+
+= 6.2.2 =
+
+- Fix: improve bottom offset calculation when scrolling up
+
+= 6.2.1 =
+
+- Fix: widget height increasing
+- Fix: widget scrolling align position
+- Fix: compatibility with existing CSS transition rules
+
+= 6.2.0 =
+
+- Improvement: requires PHP 7.2
+- Fix: various improvements in cases where the fixed widget flickered, or the height was could not be determined correctly
+
+= 6.1.1 =
+
+- Improvement: reposition the fixed widget when the screen is resized, e.g., a mobile device turned into landscape mode
+- Improvement: various optimizations for specific themes and setups reported by users
+
+= 6.1.0 =
+
+- Feature: Add the `FixedWidget__fixed_widget__pinned` class to the fixed widget while it is sticky and remove it when it is unfixed. This allows users to apply their own styling only during a fixed state.
+- Improvement: rename "Test new version" option into "Improved version" and changed the option description to make it more clear that both script versions will be kept.
+- Improvement: change "Fixed Widget Options" menu item into "Fixed Widget"
+- Improvement: Handle edge cases where the Minimum Width option doesn’t work for specific themes
 
 = 6.0.7 =
 
@@ -130,7 +152,7 @@ Use the options `Minimum Screen Width` and `Minimum Screen Height` to disable st
 Version 6.0.0 is a full rewrite of the frontend script. It fixes many edge cases like jumping, reloading, or resizing widgets.
 The rewrite also resolves bad Cumulative Layout Shifts.
 
-Most changes are available when you enable "Test new version" under Appearance > Fixed Widget Options.
+Most changes are available when you enable "Improved version" under Appearance > Fixed Widget.
 
 Please test and [let us know](https://wordpress.org/support/plugin/q2w3-fixed-widget/) if you discover any issues.
 
@@ -277,7 +299,7 @@ Please test and [let us know](https://wordpress.org/support/plugin/q2w3-fixed-wi
 * Fixed javascript error when no sidebars exists on a page.
 
 = 2.0 =
-* Fixed footer overlapping problem! Now users can customize top and bottom margins for the fixed widgets from the admin area (Appearance -> Fixed Widget Options).
+* Fixed footer overlapping problem! Now users can customize top and bottom margins for the fixed widgets from the admin area (Appearance -> Fixed Widget).
 * Added localization support
 
 = 1.0.3 =

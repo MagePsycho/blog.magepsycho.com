@@ -265,6 +265,33 @@ final class ITSEC_Lib {
 	}
 
 	/**
+	 * Get the list of Central IPs.
+	 *
+	 * @return string[]
+	 */
+	static function get_trusted_ips() {
+		return apply_filters( 'solid_security_trusted_ips', array() );
+	}
+
+	/**
+	 * Determines whether a given IP address from Central and should be trusted.
+	 *
+	 * @return boolean true if IP is Central or false
+	 */
+	static function is_ip_trusted( ) {
+		$ip = self::get_ip();
+		$trusted_ips = self::get_trusted_ips();
+		
+		foreach ( $trusted_ips as $trusted_ip ) {
+			if ( ITSEC_Lib_IP_Tools::intersect( $ip, $trusted_ip ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Checks if the given IP is banned.
 	 *
 	 * @param string $ip IP address to check.
@@ -612,15 +639,16 @@ final class ITSEC_Lib {
 	 * @param string $password
 	 * @param array  $penalty_strings Additional strings that if found within the password, will decrease the strength.
 	 *
-	 * @return ITSEC_Zxcvbn_Results
+	 * @return array
 	 */
 	public static function get_password_strength_results( $password, $penalty_strings = array() ) {
-		if ( ! isset( $GLOBALS['itsec_zxcvbn'] ) ) {
-			require_once( ITSEC_Core::get_core_dir() . '/lib/itsec-zxcvbn-php/zxcvbn.php' );
-			$GLOBALS['itsec_zxcvbn'] = new ITSEC_Zxcvbn();
+		global $itsec_zxcvbn;
+
+		if ( ! $itsec_zxcvbn ) {
+			$itsec_zxcvbn = new \iThemesSecurity\Strauss\ZxcvbnPhp\Zxcvbn();
 		}
 
-		return $GLOBALS['itsec_zxcvbn']->test_password( $password, $penalty_strings );
+		return $itsec_zxcvbn->passwordStrength( $password, $penalty_strings );
 	}
 
 	/**
@@ -713,7 +741,7 @@ final class ITSEC_Lib {
 			return substr( $path, strlen( $prefix ) );
 		}
 
-		return '';
+		return $path;
 	}
 
 	/**
@@ -1170,6 +1198,20 @@ final class ITSEC_Lib {
 		}
 
 		return $array;
+	}
+
+	/**
+	 * Removes any number of items from a list.
+	 *
+	 * Values are loosely compared.
+	 *
+	 * @param array $array
+	 * @param       ...$values
+	 *
+	 * @return array
+	 */
+	public static function array_pull( array $array, ...$values ): array {
+		return array_values( array_diff( $array, $values ) );
 	}
 
 	/**
@@ -2022,7 +2064,17 @@ final class ITSEC_Lib {
 	 *
 	 * @return array
 	 */
-	public static function preload_rest_requests( $requests ) {
+	public static function preload_rest_requests( $requests, string $page = '' ) {
+		if ( $page ) {
+			/**
+			 * Filters the list of API requests to preload.
+			 *
+			 * @param array  $requests
+			 * @param string $page
+			 */
+			$requests = apply_filters( 'itsec_preload_requests', $requests, 'tools' );
+		}
+
 		$preload = array();
 
 		foreach ( $requests as $key => $config ) {
@@ -2045,6 +2097,18 @@ final class ITSEC_Lib {
 			if ( $response->get_status() >= 200 && $response->get_status() < 300 ) {
 				rest_send_allow_header( $response, rest_get_server(), $request );
 
+				if ( is_int( $key ) ) {
+					$key = $config['route'];
+
+					if ( ! empty( $config['query'] ) ) {
+						$key = add_query_arg( $config['query'], $key );
+					}
+
+					if ( ! empty( $config['embed'] ) ) {
+						$key = add_query_arg( '_embed', '1', $key );
+					}
+				}
+
 				$preload[ $key ] = array(
 					'body'    => rest_get_server()->response_to_data( $response, ! empty( $config['embed'] ) ),
 					'headers' => $response->get_headers()
@@ -2053,6 +2117,40 @@ final class ITSEC_Lib {
 		}
 
 		return $preload;
+	}
+
+	/**
+	 * Preloads a REST API request directly into a data store.
+	 *
+	 * This can be useful when we need the data to be immediately
+	 * available when the app renders. Typical preloading still has
+	 * a fractional delay, as it goes through an async fetch stack.
+	 *
+	 * @param string $store  The data store handle.
+	 * @param string $action The data store action.
+	 * @param string $route  The REST API route to fetch.
+	 * @param array  $query  Query parameters for the REST API route.
+	 *
+	 * @return bool
+	 */
+	public static function preload_request_for_data_store( string $store, string $action, string $route, array $query = [] ): bool {
+		$request = new WP_REST_Request( 'GET', $route );
+		$request->set_query_params( $query );
+
+		$response = rest_do_request( $request );
+
+		if ( $response->is_error() ) {
+			return false;
+		}
+
+		$data = rest_get_server()->response_to_data( $response, ! empty( $query['_embed'] ) );
+
+		return wp_add_inline_script( 'itsec-packages-data', sprintf(
+			"wp.data.dispatch( '%s' ).%s( %s )",
+			$store,
+			$action,
+			wp_json_encode( $data )
+		) );
 	}
 
 	/**
@@ -2332,13 +2430,32 @@ final class ITSEC_Lib {
 	}
 
 	/**
+	 * Get info used to help evaluate requirements according to
+	 * {@see ITSEC_Lib::evaluate_requirements()}.
+	 *
+	 * @return array[]
+	 */
+	public static function get_requirements_info(): array {
+		return [
+			'load'   => ITSEC_Core::is_loading_early() ? 'early' : 'normal',
+			'server' => [
+				'php'        => explode( '-', PHP_VERSION )[0],
+				'extensions' => [
+					'OpenSSL' => self::is_func_allowed( 'openssl_verify' ),
+				],
+			],
+		];
+	}
+
+	/**
 	 * Evaluate whether this site passes the given requirements.
 	 *
-	 * @param array $requirements
+	 * @param array $requirements The requirements list. Formatted according to the schema.
+	 * @param bool  $add_messages Whether to add error messages.
 	 *
 	 * @return WP_Error
 	 */
-	public static function evaluate_requirements( array $requirements ) {
+	public static function evaluate_requirements( array $requirements, bool $add_messages = true ) {
 		$schema = [
 			'type'                 => 'object',
 			'additionalProperties' => false,
@@ -2366,6 +2483,32 @@ final class ITSEC_Lib {
 						'type' => 'string',
 					],
 				],
+				'multisite'     => [
+					'type' => 'string',
+					'enum' => [ 'enabled', 'disabled' ],
+				],
+				'server'        => [
+					'type'       => 'object',
+					'properties' => [
+						'php'        => [
+							'type' => 'string',
+						],
+						'extensions' => [
+							'type'  => 'array',
+							'items' => [
+								'type' => 'string',
+								'enum' => [ 'OpenSSL' ],
+							],
+						],
+					],
+				],
+				'load'          => [
+					'type' => 'string',
+					'enum' => [ 'normal', 'early' ],
+				],
+				'ip'            => [
+					'type' => 'boolean',
+				],
 			],
 		];
 
@@ -2386,36 +2529,134 @@ final class ITSEC_Lib {
 					$version = $requirement[ $key ];
 
 					if ( version_compare( ITSEC_Core::get_plugin_version(), $version, '<' ) ) {
-						$error->add(
-							'version',
-							sprintf( __( 'You must be running at least version %s of iThemes Security.', 'better-wp-security' ), $version )
-						);
+						if ( $add_messages ) {
+							$error->add(
+								'version',
+								sprintf( __( 'You must be running at least version %s of Solid Security.', 'better-wp-security' ), $version )
+							);
+						} else {
+							$error->add( 'version', '' );
+						}
 					}
 
 					break;
 				case 'ssl':
 					if ( $requirement !== is_ssl() ) {
-						$error->add(
-							'ssl',
-							$requirement ? __( 'Your site must support SSL.', 'better-wp-security' ) : __( 'Your site must not support SSL.', 'better-wp-security' )
-						);
+						if ( $add_messages ) {
+							$error->add(
+								'ssl',
+								$requirement ? __( 'Your site must support SSL.', 'better-wp-security' ) : __( 'Your site must not support SSL.', 'better-wp-security' )
+							);
+						} else {
+							$error->add( 'ssl', '' );
+						}
 					}
 					break;
 				case 'feature-flags':
 					foreach ( $requirement as $flag ) {
 						if ( ! ITSEC_Lib_Feature_Flags::is_enabled( $flag ) ) {
+							if ( $add_messages ) {
+								$error->add(
+									'feature-flags',
+									sprintf(
+										__( 'The \'%s\' feature flag must be enabled.', 'better-wp-security' ),
+										( ITSEC_Lib_Feature_Flags::get_flag_config( $flag )['title'] ?? $flag ) ?: $flag
+									)
+								);
+							} else {
+								$error->add( 'feature-flags', '' );
+							}
+						}
+					}
+					break;
+				case 'multisite':
+					if ( $requirement === 'enabled' && ! is_multisite() ) {
+						if ( $add_messages ) {
 							$error->add(
-								'feature-flags',
-								sprintf(
-									__( 'The \'%s\' feature flag must be enabled.', 'better-wp-security' ),
-									( ITSEC_Lib_Feature_Flags::get_flag_config( $flag )['title'] ?? $flag ) ?: $flag
-								)
+								'multisite',
+								__( 'Multisite must be enabled.', 'better-wp-security' )
 							);
+						} else {
+							$error->add( 'multisite', '' );
+						}
+					} elseif ( $requirement === 'disabled' && is_multisite() ) {
+						if ( $add_messages ) {
+							$error->add(
+								'multisite',
+								__( 'Multisite is not supported.', 'better-wp-security' )
+							);
+						} else {
+							$error->add( 'multisite', '' );
+						}
+					}
+					break;
+				case 'server':
+					$info = self::get_requirements_info();
+
+					if ( isset( $requirement['php'] ) && version_compare( $info['server']['php'], $requirement['php'], '<' ) ) {
+						$error->add( 'server', sprintf( __( 'You must be running PHP version %s or later.', 'better-wp-security' ), $requirement['php'] ) );
+					}
+
+					$missing = array_filter( $requirement['extensions'] ?? [], function ( $extension ) use ( $info ) {
+						return empty( $info['server']['extensions'][ $extension ] );
+					} );
+
+					if ( $missing ) {
+						if ( ! $add_messages ) {
+							$error->add( 'server', '' );
+							break;
+						}
+
+						if ( count( $missing ) === 1 ) {
+							$message = sprintf( __( 'The %s PHP extension is required.', 'better-wp-security' ), ITSEC_Lib::first( $missing ) );
+						} else {
+							$message = wp_sprintf(
+								_n(
+									'The following PHP extension is required: %l.',
+									'The following PHP extensions are required: %l.',
+									count( $missing ),
+									'better-wp-security'
+								),
+								$missing
+							);
+						}
+
+						$error->add( 'server', $message );
+					}
+					break;
+				case 'load':
+					if ( $requirement === 'normal' && ITSEC_Core::is_loading_early() ) {
+						if ( $add_messages ) {
+							$error->add( 'load', __( 'Loading Solid Security via an MU-Plugin is not supported.', 'better-wp-security' ) );
+						} else {
+							$error->add( 'load', '' );
+						}
+					} elseif ( $requirement === 'early' && ! ITSEC_Core::is_loading_early() ) {
+						if ( $add_messages ) {
+							$error->add( 'load', __( 'Loading Solid Security without an MU-Plugin is not supported.', 'better-wp-security' ) );
+						} else {
+							$error->add( 'load', '' );
+						}
+					}
+					break;
+				case 'ip':
+					if ( ! ITSEC_Lib_IP_Detector::is_configured() ) {
+						if ( $add_messages ) {
+							$error->add( 'ip', __( 'You must select an IP Detection method in Global Settings.', 'better-wp-security' ) );
+						} else {
+							$error->add( 'ip', '' );
 						}
 					}
 					break;
 			}
 		}
+
+		/**
+		 * Fires when a requirements error is encountered.
+		 *
+		 * @param WP_Error $error
+		 */
+		do_action( 'itsec_requirements_error', $error );
 
 		return $error;
 	}
@@ -2572,18 +2813,18 @@ final class ITSEC_Lib {
 	/**
 	 * Extends a service definition, ignoring if the service has been frozen.
 	 *
-	 * @param \Pimple\Container $c
-	 * @param string            $id
-	 * @param callable          $extend
+	 * @param \iThemesSecurity\Strauss\Pimple\Container $c
+	 * @param string                                    $id
+	 * @param callable                                  $extend
 	 *
 	 * @return bool
 	 */
-	public static function extend_if_able( \Pimple\Container $c, string $id, callable $extend ): bool {
+	public static function extend_if_able( \iThemesSecurity\Strauss\Pimple\Container $c, string $id, callable $extend ): bool {
 		try {
 			$c->extend( $id, $extend );
 
 			return true;
-		} catch ( \Pimple\Exception\FrozenServiceException $e ) {
+		} catch ( \iThemesSecurity\Strauss\Pimple\Exception\FrozenServiceException $e ) {
 			return false;
 		}
 	}
@@ -2647,5 +2888,61 @@ final class ITSEC_Lib {
 			wp_rand( 0, 0xffff ),
 			wp_rand( 0, 0xffff )
 		);
+	}
+
+	/**
+	 * Clears the WordPress auth cookies.
+	 *
+	 * This function is safe to call before plugins have been loaded.
+	 * But the request MUST exist after calling it.
+	 *
+	 * @return void
+	 */
+	public static function clear_auth_cookie() {
+		if ( ! function_exists( 'wp_clear_auth_cookie' ) ) {
+			if ( is_multisite() ) {
+				ms_cookie_constants();
+			}
+
+			// Define constants after multisite is loaded.
+			wp_cookie_constants();
+
+			require_once ABSPATH . 'wp-includes/pluggable.php';
+		}
+
+		wp_clear_auth_cookie();
+	}
+
+	public static function recursively_json_serialize( $value ) {
+		if ( $value instanceof JsonSerializable ) {
+			return $value->jsonSerialize();
+		}
+
+		if ( is_array( $value ) ) {
+			foreach ( $value as $k => $v ) {
+				$value[ $k ] = self::recursively_json_serialize( $v );
+			}
+		}
+
+		return $value;
+	}
+
+	/**
+	 * Build a "oneOf" schema from a given map.
+	 *
+	 * This method generates an array of oneOf entries based on the provided map, where each schema
+	 * includes an "enum" and a "title" key.
+	 *
+	 * @param array $map An associative array where keys are the enum values and values are the titles.
+	 *
+	 * @return array An array of schemas, each containing "enum" and "title" entries.
+	 */
+	public static function build_one_of_schema( array $map ): array {
+		$result = [];
+		foreach ( $map as $enum => $title ) {
+			$result[] = ['enum' => [$enum], 'title' => $title];
+		}
+
+		return $result;
 	}
 }

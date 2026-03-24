@@ -1,18 +1,20 @@
-=== TaxoPress is the WordPress Tag, Category, and Taxonomy Manager ===
-Contributors: publishpress, kevinB, stevejburge, andergmartins, olatechpro, ojopaul
-Tags: category, tag, taxonomy, related posts, tag cloud, terms, tagging, navigation, tag manager, tags manager, term manager, terms manager
-Requires at least: 3.3
-Tested up to: 5.9
-Stable tag: 3.6.1
-Requires PHP: 5.6
+=== Tag, Category, and Taxonomy Manager - AI Autotagger with OpenAI ===
+Contributors: publishpress, kevinB, stevejburge, andergmartins, olatechpro, ojopaul, deji98
+Tags: category, tag, taxonomy, categories, tag cloud
+Requires at least: 5.0
+Tested up to: 6.8
+Stable tag: 3.44.0
+Requires PHP: 7.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-TaxoPress enables you to manage Tags, Categories and all your WordPress taxonomy terms.
+Tags, Categories and WordPress terms are easy with TaxoPress. Add a Tag or Category to Pages, manage your WooCommerce Categories and Tags and more.
 
 == Description ==
 
 TaxoPress allows you to create and manage Tags, Categories, and all your WordPress taxonomy terms. TaxoPress can help with all your WordPress content, from adding Tags and Categories to Pages, to managing WooCommerce Product Categories and bbPress Topic Tags. 
+
+TaxoPress has integrations with AI tools including OpenAI, IBM Watson, Dandelion, LSEG / Refinitiv and more. You can use these services to find the best taxonomy terms for your content.
 
 With TaxoPress, you can organize, optimize, and showcase all your WordPress content:
 
@@ -23,9 +25,9 @@ With TaxoPress, you can organize, optimize, and showcase all your WordPress cont
 ## TaxoPress Pro ##
 
 > <strong>Upgrade to TaxoPress Pro</strong><br />
-> This plugin is the free version of TaxoPress. The Pro version of TaxoPress has extra features and expert support. <a href="https://taxopress.com/pro" title="TaxoPress Pro">Click here to organize, optimize and showcase your content with TaxoPress now!</a>
+> This plugin is the free version of TaxoPress. The Pro version of TaxoPress has extra features and expert support. [Get the TaxoPress Pro plugin now!](https://taxopress.com/taxopress)
 
-## Key Features in TaxoPress ##
+## 10 Key Features in TaxoPress ##
 
 1. **Manage Terms and Taxonomies**: You can create new taxonomies and edit all the settings for each taxonomy.
 2. **Terms Display**: This feature allows you to create a customizable display of all the terms in one taxonomy.
@@ -33,17 +35,18 @@ With TaxoPress, you can organize, optimize, and showcase all your WordPress cont
 4. **Related Posts**: Shows lists of posts with similar tags and categories.
 5. **Auto Links**: If you have a term called “WordPress”, the Auto Links feature will find any instances of “WordPress” in your content and add links to the archive page for that tag.
 6. **Auto Terms**: If you have a term called "WordPress", Auto Terms can analyze your posts, and when it finds the word "WordPress", it can add that term to your post. 
-7. **Suggest Terms**: This feature can show a metabox where you can browse all your existing terms. A second metabox can analyze your content and find new ideas for terms. 
-8. **Mass Edit Terms**: Quickly add or remove taxonomy terms from any content in WordPress.
-9. **Manage Terms**: Add, rename, merge, remove, delete and even delete unused terms.
+7. **TaxoPress and AI**: The Pro version of TaxoPress has AI integrations with OpenAI, IBM Watson, and more. This makes it easier for you to find or create the best taxonomy terms for your content.
+8. **Term Synonyms**: This feature allows you to have multiple words associated with a single term.
+9. **Linked Terms**: You can connect terms. When the main term is added to a post, the linked terms will be added also.
+10. **Manage Terms**: Add, rename, merge, remove, delete and even delete unused terms.
 
-## 1. Create and Manage Taxonomies ##
+## Feature 1. Create and Manage Taxonomies ##
 
 TaxoPress can manage all the taxonomies created by WordPress and your plugins and themes. You can change the settings for each taxonomy. For example, you can change the visual labels, and control whether the taxonomy is organized in parent-child relationships. You can also assign your taxonomies to different post types. For example, you can use TaxoPress to add Categories to Pages, or WooCommerce Tags to Posts.
 
 [Click here to read about managing taxonomies](https://taxopress.com/docs/introduction-taxonomies-screen/).
 
-## 2. Terms Display ##
+## Feature 2. Terms Display ##
 
 The Terms Display feature in TaxoPress allows you to show a cloud or list of the terms used on your site. For example, you can create a "Tag Cloud" showing all your WooCommerce product categories, or you can create a list of all the tags on bbPress topics.
 
@@ -51,7 +54,7 @@ TaxoPress makes it easy to customize the format of your terms, and add custom CS
 
 [Click here to read about Terms Display](https://taxopress.com/docs/introduction-to-tag-clouds/).
 
-## 3. Terms for Current Post ##
+## Feature 3. Terms for Current Post ##
 
 The Terms for Current Post feature in TaxoPress allows you to customize the displays of terms for single posts. This display is separate from any default display of terms in your theme, so you can use this feature to easily show terms anywhere on your site.
 
@@ -59,7 +62,7 @@ TaxoPress makes it easy to customize the format of your terms, and add custom CS
 
 [Click here to read about Terms for Current Post](https://taxopress.com/docs/introduction-to-tags-for-current-post/).
 
-## 4. Related Posts ##
+## Feature 4. Related Posts ##
 
 TaxoPress can display posts that are related to the current post. This feature works by checking for shared taxonomy terms. If your post has the terms “Vegetables” and “Food”, then this feature will likely display other posts that also have the terms “Vegetables” and “Food”. The more terms that are shared, the more likely a post is to show.
 
@@ -67,13 +70,13 @@ The Related Posts can be shown in a shortcode, a widget, or TaxoPress can try an
 
 [Click here to read about Related Posts](https://taxopress.com/docs/introduction-to-related-posts/).
 
-## 5. Auto Links ##
+## Feature 5. Auto Links ##
 
 The Auto Links feature in TaxoPress will automatically add links to your content. If you have a term called “WordPress”, the Auto Links feature will find any instances of “WordPress” in your content and add a link to the archive page for that tag. So any instances of “WordPress” will link to /tag/wordpress.
 
 [Click here to read about Auto Links](https://taxopress.com/docs/introduction-to-auto-links/).
 
-## 6. Auto Terms ##
+## Feature 6. Auto Terms ##
 
 This feature allows WordPress to examine your post content and title for specified terms and automatically add those terms as Tags. Here’s an example of how it works:
 
@@ -82,34 +85,40 @@ This feature allows WordPress to examine your post content and title for specifi
 
 [Click here to read about automatically adding terms](https://taxopress.com/docs/introduction-to-auto-terms/).
 
-## 7. Suggest Terms ##
+## Feature 7. TaxoPress and AI (Pro version) ##
 
-The Suggest Terms feature helps when you're writing content in WordPress. It becomes much easier for you to find the best taxonomy terms for your content.
+This feature makes it easier for you to find or create the best taxonomy terms for your content. TaxoPress AI can show a metabox on your post editing screen with all these options:. 
 
-Suggest Terms can show two metaboxes on your post editing screen:
+* **Manage Post Terms**: This feature allows you to manage all the terms that are currently attached to a post.
+* **Suggest Existing Terms**: This feature uses a tool in the TaxoPress plugin that can scan your posts and suggest relevant terms that already exist on your site.
+* **Show All Existing Terms**: This feature allows you to browse all the terms in a taxonomy.
+* **OpenAI** / **IBM Watson** / **Dandelion** / **LSEG**: These integrations allow you to connect to external service. These services will scan your content and suggest relevant terms. They can suggest existing terms and also new terms.
 
-* One metabox can help you browse and select from all your existing terms. 
-* One metabox can analyze your content and find new ideas for terms. TaxoPress can suggest terms that already exist on your site. TaxoPress can also create new ideas from services such as Dandelion and Open Calais.
+[Click here to read about TaxoPress and AI](https://taxopress.com/docs/sources-for-auto-terms/).
 
-[Click here to read about suggesting terms](https://taxopress.com/docs/introduction-to-suggested-tags/).
+## Feature 8. Term Synonyms ##
 
-## 8. Mass Edit Terms ##
+Synonyms is a feature in TaxoPress Pro that allows you to have multiple words associated with a single term. If TaxoPress scans your content and finds a synonym, it will act as if it has found the main term.
 
-The Mass Edit Terms screen allows you to quickly add or remove taxonomy terms from any content in WordPress.
+Synonyms will be available on each term screen. For example, if your term is “Apple”, you can create synonyms such as “Apples”, “Golden Delicious”, “Granny Smith”, “Pink Lady”, “Honeycrisp”, “Red Delicious”, “Braeburn” and “Gravenstein”.
 
-The first step is to choose which taxonomy you want to modify. At the top of the screen, use the dropdown boxes to choose your taxonomy. You will now see all your Posts and the Tags attached to them. You can now add or remove terms to all your posts.
+[Click here to read about Term Synonyms](https://taxopress.com/docs/synonyms/).
 
-[Click here to read about suggesting terms](https://taxopress.com/docs/mass-edit-terms/).
+## Feature 9. Linked Terms ##
 
-## 9. Manage Terms ##
+Linked Terms is a feature in TaxoPress Pro that allows you to connect terms. When the main term is added to a post, the linked terms will be added also.
+
+For sites with a lot of terms, this feature makes it easier and quicker for your users to add the correct terms. For example, if you add the term “WordPress” to your posts, TaxoPress can automatically add Linked Terms that include “CMS”, “website”, and “website design”.
+
+[Click here to read about Linked Terms](https://taxopress.com/docs/linked-terms/).
+
+## Feature 10. Manage Terms ##
 
 The Manage Terms screen in TaxoPress provides you with several useful tools to manage the terms on your site. These tools can be used with any taxonomy. Here are some of the tools on the Manage Terms screen:
 
 * **Add terms**: Quickly add terms to your content.
 * **Rename terms**: Change the name of your terms in bulk.
 * **Merge terms**: Combine existing terms together. This is very useful for fixing typos in your terms.
-* **Remove terms**: Remove terms from all posts, without deleting those terms.
-* **Delete terms**: Delete terms in bulk.
 * **Delete unused terms**: Delete any terms that are rarely used.
 
 [Click here to read about managing terms](https://taxopress.com/docs/introduction-to-manage-terms/).
@@ -117,7 +126,20 @@ The Manage Terms screen in TaxoPress provides you with several useful tools to m
 ## TaxoPress Pro ##
 
 > <strong>Upgrade to TaxoPress Pro</strong><br />
-> This plugin is the free version of TaxoPress. The Pro version of TaxoPress has extra features and expert support. <a href="https://taxopress.com/pro"  title="TaxoPress Pro">Click here to organize, optimize and showcase your content with TaxoPress now!</a>
+> This plugin is the free version of TaxoPress. The Pro version of TaxoPress has extra features and expert support. [Get the TaxoPress Pro plugin now!](https://taxopress.com/taxopress)
+
+## The TaxoPress and Tag Groups plugins ##
+
+TaxoPress is developed by the same team that support the popular [Tag Groups plugin](https://wordpress.org/plugins/tag-groups/). Together Tag Groups and TaxoPress are an excellent solution for organizing and displaying your site’s content.
+
+## TaxoPress Bug Reports =
+
+Bug reports for TaxoPress are welcomed in our [repository on GitHub](https://github.com/taxopress/taxopress). Please note that GitHub is not a support forum, but a place to report bugs in the plugn that can be replicated outside of a single site.
+
+= Follow the TaxoPress team =
+
+Follow TaxoPress on [Facebook](https://www.facebook.com/taxopress), [Twitter](https://www.twitter.com/taxopress) and [YouTube](https://www.youtube.com/taxopress).
+
 
 == Installation ==
 
@@ -214,6 +236,27 @@ If you have a busy WooCommerce site, it can be difficult to organize all your pr
 
 [Click here to see more about automatically adding WooCoomerce Product Tags](https://taxopress.com/automatically-add-woocommerce-product-tags-and-categories/).
 
+= What’s the Difference Between WordPress Categories and Tags? = 
+
+The main difference between Categories and Tags is the ability to create levels of Categories. Categories are hierarchical, which means terms can be organized into a parent-child relationship. For example, you could have a Category called “Fruit”, and under this Category you could have categories called “Apples”, “Bananas”, “Grapes”, and “Peaches”. Tags are not hierarchical, which means there’s no relationship between them. You can still add the same words as Tags, but by default they can not have relationships. You can modify this using [the Taxonomies screen in TaxoPress](https://taxopress.com/docs/introduction-taxonomies-screen/).
+
+[Click here to see the difference between Tags and Categories](https://taxopress.com/difference-categories-tags/)
+
+= Can I Build WordPress Tag Generator With TaxoPress? =
+
+Yes, this is possible with the TaxoPress plugin. TaxoPress has a feature that can analyze your content and automatically add new terms. This tag generator will be very useful for anyone who creates a lot of content. This feature is called “Auto Terms” and it works by integrating with the OpenAI, IBM Watson, Dandelion or LSEF systems to scan content and create terms.
+
+[Click here to see how to build a tag generator](https://taxopress.com/wordpress-tag-generator/)
+
+= How Do I Integrate OpenAI with TaxoPress? =
+
+OpenAI / OpenAI / ChatGPT is the most popular AI tool available today. The TaxoPress AI feature has an integration with the OpenAI service. [This OpenAI guide](https://taxopress.com/docs/register-openai/) will help you register for an account at OpenAI and get an API Key to use with TaxoPress.
+
+= How Do I Integrate IBW Watson with TaxoPress? =
+
+IBW Watson is one of the most powerful AI tools available today. The TaxoPress AI feature has an integration with the  Natural Language Understanding service from IBM. [This IBM Watson guide](https://taxopress.com/docs/register-ibm/) will help you register for an account at IBM Cloud and get an API Key and URL to use with TaxoPress.
+
+
 == Screenshots ==
 
 1. You can create new taxonomies and edit all the settings for each taxonomy.
@@ -224,6 +267,540 @@ If you have a busy WooCommerce site, it can be difficult to organize all your pr
 6. If you have a term called “WordPress”, the Auto Links feature will find any instances of “WordPress” in your content and add a link to the archive page for that tag.
 
 == Changelog ==
+
+v3.44.0- 2026-01-22
+* Fixed: Auto Terms Existing Content and Schedule aren't adding terms correctly, #2898
+* Update: Update description for automatic terms display selection mode, #2893
+* Update: Add a description to Posts and Manage Terms tabs, #2894
+* Update: Description for Frontend Scripts, #2895
+* Update: Add AutoTerms Log link to Existing Content page, #2897
+
+v3.43.0- 2026-01-13
+* Fixed: "Post term separator string" not working, #2879
+* Fixed: Taxopress adds inline css in the head, #2877
+* Update: Allow Synonyms to be added using a separator. #2880
+* Update: Add Whole Words setting for Auto Links, #2876
+* Update: Add {site_terms} placeholder for site-wide term search in OpenAI AutoTerms, #2875
+* Update: Move "Schedule" to the Free version, #2862
+* Update: Allow users to disable frontend scripts, #2756
+* Update: Allow users to select specific terms in "Terms Display", #2609
+* Removed: Remove unavailable OpenAI models, #2874
+
+v3.42.0- 2025-12-08
+* Fixed: Terms screen is blank in wordpress 6.9, #2865
+
+v3.41.0- 2025-12-01
+* Fixed: Autocomplete doesn't handle characters correctly, #2853
+* Fixed: Mass Edit search box is unclear, #2852
+* Fixed: Auto Terms and Custom Fields not working, #2841
+* Fixed: Minimum term usage for Auto Links is not applied, #2823
+* Improved: Improve Manage Terms batch merge permissions, #2844
+* Improved: Improve AI “Existing Terms” ordering and performance, #2842
+* Improved: Improve "Suggest Terms to Merge" suggestions and UI, #2840
+* Update: Add Post Type Filters to the Taxonomy screen, #2846
+
+v3.40.1- 2025-11-03
+* Fixed: Uncaught TypeError: Cannot read properties of null (reading 'removeEditorPanel'), #2830
+* Fixed: Security improvement in Autoterm post_types/post_status parameters, #2827
+* Fixed: Can't add 2 terms with the same name, #2826
+* Fixed: Dashboard is too wide for the screen, #2820
+* Update: Translations updates for TaxoPress Pro 3.40.0, #2825
+
+v3.40.0- 2025-10-16
+* Fixed: Preview dropdown doesn't show some characters correctly, #2780
+* Fixed: Issue with some GPT 5 models, #2778
+* Fixed: Auto Links not working with Elementor, #2808
+* Update: Show term slug in Mass Edit Terms, #2777
+* Update: Show term slug in the metabox, #2774
+* Update: Move Metabox Settings to Fast Update Screen, #2773
+* Update: Scan and Automatically Suggest terms to merge, #2729
+* Update: Preview for different user roles and post types, #2795
+* Update: Update to Menu links: Rename "Fast Update" to "Metaboxes", #2791
+* Update: Place License tab to the end of all tabs, #2804
+* Update: Only show the pencil edit icon on the Metaboxes screen, #2792
+* Removed: Remove Title feature from Auto Links, #2809
+
+v3.38.0- 2025-09-17
+* Fixed: Frontend css loads on all pages, #2757
+* Fixed: Autolink Feature is slowing down the admin area, #2754
+* Fixed: Some settings not apllied in suggest existing terms, #2748
+* Fixed: Schedule autoterms not running, #2747
+* Fixed: Problem with GPT 5, #2745
+* Fixed: Dropdown in the Metabox is hard to use, #2733
+* Fixed: Choose Terms screens are over-complex, #2701
+* Update: Update the readme from WordPress.org, #2746
+* Update: Improve UI for the "Schedule" feature, #2743
+* Update: Allow users to rename the metabox tabs, #2736
+* Update: Allow users to disable the filters in the Metabox, #2734
+* Update: Lock icon for "Add" buttons, #2721
+* Update: Italian Translation Update for TaxoPress FREE 3.37.4, #2744
+
+v3.37.4- 2025-09-02
+* Update: Enable "Add terms if synonyms found" by default, #2727
+* Update: Update the OpenAI models, #2728
+* Fixed: Error with "Existing taxonony terms", #2732
+
+v3.37.3- 2025-08-10
+* Update: Add security checks for autocomplete, #2722
+* Update: Update tooltip library. #2720
+* Update: Add cropping for Related Posts images #2704
+* Fixed: Related Posts doesn't display correct inside post editor, #2705
+
+v3.37.2- 2025-07-09
+* Fixed: Uncaught Error: array_merge(): Argument #1 must be of type array, string given in taxonomies-functions, #2698
+* Fixed: Auto Links new engine message is under two tabs, #2702
+* Fixed: No tags text is missing on the frontend, #2712
+* Fixed: unable to uncheck categories in post editor, #2697
+* Fixed: Term Order doesn't support nested Categories, #2695
+* Update: Hide the Custom URL column on Terms screen, #2700
+* Update: Update "Taxonomy Terms Table" name, #2699
+
+v3.37.1- 2025-07-03
+* Fixed: Allow Users to disable TaxoPress Ordering Methods, #2687
+
+v3.37.0- 2025-06-23
+* Fixed: Warning issue from Auto Links, #2663
+* Fixed: Not all design settings apply to Terms Display designs, #2658
+* Update: Move Auto Terms tab, #2661
+* Update: Update "Metabox" tab settings, #2660
+* Update: Update "Term Management" label, #2659
+* Update: New tab for "Layout", #2657
+* Update: Add a message for empty previews, #2655
+* Update: Improve default display for Related Posts, #2651
+* Update: Improve default display for Terms Display, #2650
+* Update: Allow users to disable either "Custom URLs" or "Auto Links", #2632
+* Feature: Design options for Terms for Current Post and Related Posts, #2656
+* Feature: Display options for Terms for Current Post, #2653
+* Feature: Allow users to order terms via the Terms Screen, #1794
+
+v3.36.0- 2025-06-02
+* Update: Add "Edited with TaxoPress" row in taxonomies table, #2640
+* Update: Show the "Delete TaxoPress Edit Data" button for only taxonomies edited with taxopress, #2639
+* Update: Add a Loco.xml file to the Pro Version, #2634
+* Update: Move IBM Watson / Dandelion / LSEG to a Legacy status, #2577
+* Update: Update message "Posts tagged with X", #2576
+* Update: Add support for term descriptions in displays, #2429
+* Feature: Allow users to copy terms with metadata, #2522
+* Feature: Add previews feature to related posts, current posts and terms display, #2521
+* Fixed: PHP error with the Rank Math SEO plugin, #2626
+
+v3.35.1- 2025-05-12
+* Fixed: "Maximum terms to display" issue with Hidden Terms, #2625
+* Fixed: Hide "Link Categories", #2608
+* Fixed: Missing the Free banner on the Fast Update screen, #2591
+* Fixed: Conflict between TaxoPress and Amelia, #2584
+* Update: Update the copyright, #2600
+* Update: Visual clean up of Metaboxes tab, #2593
+* Update: Visual clean up of Merge tab and Manage Terms screen. #2592
+* Update: Pro nudge for Metabox Taxonomy Display, #2581
+* Update: Pro nudge for the Schedule feature, #2580
+* Update: Pro nudge for Linked Terms and Synonyms, #2578
+* Update: Text description for Linked Terms and Synonyms, #2579
+* Update: Make sure all Pro features are promoted in the Free version, #2528
+* Feature: Setting for showing the slugs, #2595
+* Update: TaxoPress v3.33.0 Translation Update ES-FR-IT, #2563, #2564
+* Update: TaxoPress v3.34.0 Translation Update ES-FR-IT, #2601, #2602
+
+v3.34.0- 2025-04-22
+* Update: Remove Hidden Terms from Auto Links, #2582
+* Update: Clarify the Exclusions message, #2573
+* Feature: Allow Users to disable Custom URL Field for Taxonomies, #2568
+* Update: Allow users to see the slug, not just the name in the Merge feture, #2567
+* Feature: Add a Parent / Child display format, #2526
+* Feature: Allow users to specify maximum or minimum length for new terms, #2525
+* Update: Reposition filters on the Manage Terms screen, #2475
+* Update: Add Ajax Support for merging large terms, #2438
+* Fixed: Add simple-tags/vendor/publishpress/wordpress-version-notices/tests/ to ignore directory list, #2566
+
+v3.33.0- 2025-03-24
+* Update: Change "Metaboxes" to "Fast Update" and make it share same look as post metabox, #2493
+* Feature: Allow users to prevent some characters from being added to terms, #2500
+* Feature: Allow admins to control which terms users can add, #2259
+* Update: Move extra options to the "Settings" area, #2497
+* Update: Move the remaining "Metaboxes" settings, #2439
+* Update: Add button to delete edited taxonomies data from TaxoPress/fix deleted taxonomy data showing in TaxoPress, #2547
+* Update: Add support for new OpenAI models, #2534
+* Update: Update Create Terms capability requirement text for metabox create tab, #2523
+* Fixed: PHP 8 phpcs error in vendor/sabre/vobject, #2533
+* Update: Update the "Hide unused terms" feature, #2326
+* Update: Small visual fixes for metabox filters, #2529
+* Update: Update widget message, #2518
+* Fixed: Maxiumum terms to display is ignored for Non-Hierarchical Taxonomies, #2519
+* Update: TaxoPress v.3.32.0 Translation Update ES-FR-IT, #2517
+
+v3.32.0- 2025-03-03
+* Fixed: PHP Parse error: syntax error, unexpected ‘=>’ on PHP 5.6 or lower, #2505
+* Fixed: Maximum terms to display, #2504
+* Update: Enable select2 search on autoterms schedule and Terms Display page, #2507
+* Update: TaxoPress v.3.31.0 Translation Update ES-FR-IT, #2503
+
+v3.31.0- 2025-02-27
+* Feature: Allow users to set a custom URL for Auto Links, #2470
+* Feature: Allow users to create tags manually via the metabox, #2085
+* Update: Add custom taxonomies to "Remove Default Metaboxes" settings option, #2456
+* Update: Make "Show Existing Terms" the default, #2450
+* Update: Make sure post terms is always included in "Show All Existing Terms" tab irrespective of settings restriction, #2444
+* Update: Update the "Hide unused terms" feature, #2326
+* Feature: Add a "Copy" option to taxopress screen tables, #2432
+* Update: Block other plugins from loading their notices on our screens, #2476
+* Update: Add back filter to metaboxes, #2223
+* Update: Allow multiple Auto Terms to be scheduled, #2464
+* Update: Update Taxonomies in settings "Metabox options" to only public taxonomies, #2445
+* Fixed: Auto Links PHP Error: mb_convert_encoding(): Handling HTML entities via mbstring is deprecated, #2471
+* Update: Updated text for Auto Terms logs, #2469
+* Update: Show only a subset of a Taxonomy in Terms Display, #1043
+* Fixed: Display issue for "Exceptions" in Safari, #2398
+* Update: Update the promo box text, #2462
+* Fixed: TaxoPress is adding menu separator with wrong filter, #2427
+* Fixed: Related posts count bug, #2463
+* Update: Translation Updates ES-FR-IT v3.30.0, #2457
+
+v3.30.0- 2025-01-29
+* Update: Add settings to Control how the metgabox Taxonomy box appears:  Select / Dropdown / Checkbox, #2128
+* Update: Allow users to merge multiple terms with the same name, #2357
+* Fixed: Issue with commas in "Use only some terms in the selected taxonomy.", #2301
+* Update: Update {post_terms} text, #2389
+* Update: Improve metabox permission error message, #2433
+* Fixed: Update and sanitize legacy widgets title, #2435
+* Update: Add a configuration link on Metabox description, #2440
+* Update: Small text update for Auto Term preview area, #2416
+* Update: Add back a "Display automatically" option to Related Posts, #2413
+* Update: Remove extra space in Existing Content "Stop" button link, #2414
+* Update: Text update for Related Posts, #2408
+* Update: remove the "required" label from maximum number of categories and tags, #2409
+* Update: TaxoPress v.3.28.0 Italian French Spanish translation updates, #2407
+
+v3.28.1- 2024-12-04
+* Fixes: Missing Taxonomies after v3.28.0 upgrade, #2401
+
+v3.28.0- 2024-12-03
+* Update: Add new Auto Term tab "When to Use", and move applicable settings to each subtabs, #2200
+* Update: Add a Pause button to the Existing Content screen, #2210
+* Update: Auto Terms: allow users to remove existing terms when adding new terms via Auto Terms, #1910
+* Update: Add more details to "no terms added" in Existing Content, #2289
+* Update: Use select2 search for term filters to improve term load, #2294
+* Fixed: Custom taxonomy filter isn't working, #2372
+* Fixed: Translation warning from 6.7, #2356
+* Fixed: Database error: table taxopress_linked_terms doesn’t exist, #2368
+* Update: Make "Schedule Auto Terms" into a menu link, #2144
+* Fixed: Auto Term Error message goes off the screen, #2334
+* Update: Add OpenAI settings to exclude terms not in {post_terms} if used in custom prompt, #2335
+* Update: Move Auto Term post type to new tab, #2361
+* Update: Automatically display related posts in selected post types, #2313
+* Update: Equal width for Linked Terms columns, #2344
+* Update: Text change for Linked Terms screren, #2343
+* Update: New "Display Format" tab, #2314
+* Fixed: Media Tags are not appearing in the output of get_taxonomies(), #2298
+* Update: Make Auto Term Content and Title option in Auto Term content area, #2327
+* Fixed: "Exclude terms from terms display" should cover lowercase and uppercase, #2325
+* Update: Text change for Terms screen, #2345
+* Update: Text change for Related Posts option, #2341
+* Fixed: Missing translation strings in TaxoPress Free, #2295
+* Fixed: Missing strings in TaxoPress Pro, #2349
+* Update: TAXOPRESS v3.27.0 - Translation Updates ES-FR-IT, #2339
+
+v3.27.0- 2024-11-06
+* Update: Add setting to Make Linked Terms 1-way or 2-way, #2099
+* Update: Add a subscript 1 or 2 to linked term to make it easy to know if a linked term is the primary term or secondary term, #2099
+* Update: Allow Auto Terms to search more content areas (Taxonomies and Fields), #2096
+* Update: Add a "Preview" area inside Auto Terms, #2231
+* Update: Add support for more statuses in Auto Terms, #2246
+* Update: Add {post_terms} token to OpenAI custom prompt, #2123
+* Update: Add settings to limit Synonyms to preffered taxonomies, #2094
+* Fixed: OpenAI producing sentence instead of individual terms, #2258
+* Fixed: "Show in Filter" not working for builtin taxonomies, #2291
+* Fixed: Existing Content "Limit Auto Terms, based on published date" always defaults to "24 hours ago", #2281
+* Update: Added Option to copy or migrate a term, #1055
+* Update: Update metabox "no results" texts, #2273
+* Update: Add a "Remove Terms" feature on the "Manage Terms" screen, #2271,
+* Update: Add a "Hide Unused Terms" feature on the "Manage Terms" screen, #2271
+* Update: Allow users to customize the date in Related Posts, #2249
+* Update: Improve the "Categories" area in Related Posts, #2248
+* Update: Allow users to choose the size / resolution of the image in Related Posts, #2284
+* Update: Add a Current Post block, #2263
+* Update: Add a Terms Display block, #2262
+* Update: Move Maximum number of categories to advanced category, #2305
+* Update: Small label change for blocks, #2304
+* Update: New label and tab for related posts date format, #2302
+* Update: Labels for post thumbnail, #2303
+* Fixed: "Term link format" doesn't work for Box List, #2250
+* Update: Add "Exclude Terms" feature for "Terms Display", #1376
+* Update: Translation Updates ES-FR-IT v3.26.0, #2252
+
+v3.26.0- 2024-10-08
+* Update: Move metabox API keys and settings from Metabox directly into Auto Terms, #2106
+* Update: Allow multiple sources (Existing terms, OpenAI, etc) to be used together in Auto Terms, #2075
+* Update: Allow users to choose OpenAI models, #2186
+* Update: Improve the Delete Unused Terms feature, #1857
+* Update: Set new defaults for Related Posts, #2218
+* Feature: Allow Auto Term Post filter using 'taxopress_filter_autoterm_content', #2216
+* Fixed: Not possible to save the "Maximum related posts to display" option in Related Posts, #2208
+* Update: Use the "Auto Terms setting" approach for Metaboxes also, #2101
+* Update: Provide layout options for Related Posts, #2155
+* Update: Add sorting to Related Posts Table display, #2185
+* Update: Skip the Media post type in Auto Terms, Auto Links, Terms Display, Terms for Current Post and Related Posts options, #2107
+* Update: Translation updates for TaxoPress v3.25.1, #2193
+
+v3.25.1- 2024-09-05
+* Fixed: Undefined variable $default_featured_media in Related Posts, #2187
+
+v3.25.0- 2024-09-05
+* Fixed: "Exclude previously analyzed content" not working, #2169
+* Update: Improve OpenAI failure message, #1951
+* Update: Add a notice about not leaving the screen on Existing Content page, #2170
+* Update: Add an edit link to Existing Content Auto Terms, #2172
+* Feature: Add "Border Cloud" design option to Terms Display Format. #1193
+* Feature: Add "Table" display in Terms Display format options, #1398
+* Feature: Add a "WordPress Default" display for Terms Display, #1398
+* Fixed: Auto Links not working on apostrophes, #2097
+* Update: Remove the required from Auto Terms "Existing taxonomy terms *" source field label, #2108
+* Update: Add "Save Settings" button to "Existing Content" page, #2137
+* Update: Remove "TaxoPress AI", add "Auto Terms" to plugin action links, #2139
+* Update: Update the text for "Display format" in "Terms Display, #2104
+* Update: Translation Updates ES-FR-IT_TAXO_Free v3.24.1, #2162
+
+v3.24.1- 2024-08-23
+* Fixed: Warning: Cannot modify header information preventing login on PHP 8, #2157
+
+v3.24.0- 2024-08-22
+* Update: Add options to Exclude Blocks from Auto Links, #2134
+* Update: Add options to Exclude Shortcodes from Auto Links, #2135
+* Update: Allow %post_content% as an option in Related Posts, #2127
+* Update: Allow %post_thumb_url% in Related Posts, #2114
+* Update: Make Auto Links run early before other the_content filter, #2133
+* Fixed: Auto Links issues with Preformatted code, #2120
+* Fixed: Issue with Soundcloud block and Auto Links, #2119
+* Fixed: Auto Links issues with < > in a paragraph, #2118
+* Update: Text change for related post ,#2112
+* Update: Update the text for "Display format" in "Terms Display, #2104
+* Update: Update the header area for "Manage Terms", #2130
+* Update: Update the header area for "Mass edit terms", #2129
+* Update: Remove Upgrade boxes from the "Exisiting Content" screen, #2138
+* Update: Translation Updates ES-FR-IT_TAXO_v3.23, #2125
+
+v3.23.0- 2024-08-07
+* Update: Add role visibility settings for metabox, #1957
+* Update: Allow users to remove the default Tags and Categories metaboxes, #2044
+* Update: Re-organize TaxoPress Menu, #2069
+* Update: Move Existing Content to new menu, #2022
+* Fixed: Fatal error on some website related to legacy code, #2083
+* Fixed: Auto Links doesn't work on apostrophes #2097
+* Fixed: "Auto Terms Limit" not working in Classic Editor, #2076
+* Fixed: Mass Edit Terms broken by the WordPress update notice, #2070
+* Update: Translation Updates ES-FR-IT TAXO Free v3.22.0, #2068
+
+v3.22.0- 2024-07-16
+* Fixed: TaxoPress AI Synonyms not working properly, #2013
+* Update: Disable Media Tags by default, #2036
+* Update: Small text improvements for the TaxoPress AI screen, #2059
+* Update: Allow users to choose only one Auto Term source, #2021
+* Fixed: The term_id been used to update the row where term_taxonomy_id = term_id, #2051
+* Update: Update the PublishPress vendor libraries, #2038
+* Update: Update Linked Terms description, #2047
+* Update: Translation Updates ES-FR-IT_TAXO_Free_v3.21.1, #2058
+
+v3.21.1- 2024-06-26
+* Fixed: Auto Links class/id exclusions not working on <p> elements, #2040
+* Fixed: Plugin conflict with Linked Terms, #2045
+* Fixed: TaxoPress conflict with the WP All Import plugin, #2037
+* Fixed: Deprecated in class.client.autolinks.php on line 94, #2043
+* Update: TaxoPress Italian French Spanish translation updates v. 3.21.0, #2035
+
+v3.21.0- 2024-04-22
+* Feature: Add a new "Linked Terms" screen, #2006
+* Update: Add button to fill in Linked Terms for existing posts, #1988
+* Update: Add a search box to TaxoPress AI "Show All Existing Terms" Metabox Tab, #2017
+* Fixed: WordPress lists fail when content includes "<", #1961
+* Fixed: TaxoPress Post Quick Edit link not working in French, Spanish and Italian, #2020
+* Update: Add Linked Terms taxonomies option in settings, #2007
+* Fixed: TaxoPress v.3.20.0 Italian, French, and Spanish translation updates, #2014
+
+v3.20.0- 2024-03-28
+* Removed: Remove deprecated Legacy Options and Shortcodes([st-the-tags], [st_tag_cloud]), #2004
+* Update: Allow Linked Terms to connect across Taxonomies, #1858
+* Update: Enable 2-way option for linked terms, #1736
+* Update: TaxoPress v.3.13.0 - Translation updates ES-FR-IT, #2002
+
+v3.13.0- 2024-03-18
+* Update: Add Custom Prompts to TaxoPress AI OpenAI settings, #1978
+* Update: Add "Exceptions" tab for Auto Terms, #1797
+* Fixed: PHP Fatal error: Uncaught Error: Object of class WP_Error could not be converted to string, #1989
+* Fixed: Warning: preg_match(): Empty regular expression error, #1990
+* Update: Add description in Taxonomies "Admin Area" options, #1823
+* Removed: Remove the taxonomy templates tab, #1406
+* Update: Update Taxonomy Archive page result description, #1824
+* Update: Update Taxonomy slug description to Underscores from hyphens, #1949
+* Update: TaxoPress Italian French Spanish translation updates, #1986
+
+v3.12.0- 2024-02-12
+* Fixed: Auto Terms Regex Option not working, #1338
+* Update: Support for Private Taxonomies in TaxoPress AI, #1950
+* Update: Remove linked tags relationship after a tag is deleted, #1959
+* Update: Add Linked Terms support to TaxoPress AI, #1903
+* Update: Add the "Select all Tags" option to the metabox, #1947
+* Update: Add some plugin links to the plugin description, #1946
+* Fixed: PHP Errors: Unknown modifier, #1962
+* Update: Add more information to REST API tab, #1825
+* Fixed: Deprecated issue on PHP 8.3, #1967
+* Update: Update the error message when adding tags that are already a synonym, #1964
+* Fixed: TaxoPress AI screen UI issue, #1953
+* Update: New Translation updates TaxoPress Free v.3.11.1, #1944
+
+v3.11.1- 2023-11-02
+* Update: Add TaxoPress AI metabox default taxonomy settings, #1923
+* Update: Show duplicate synonym name in synonyms error message, #1931
+* Update: Add "Select All" and "Deselect All Toggle to TaxoPress AI tags, #1906
+* Fixed: Problem with korean translation, #1933
+* Update: Default choices for TaxoPress AI Preview, #1930
+* Update: Return Mass Edit Terms from legacy to dashboard, #1920
+* Update: Remove TaxoPress AI pro metaboxes in Free version, #1921
+* Update: TaxoPress Free Italian French Spanish translation updates October 2023, #1926
+
+v3.11.0- 2023-10-25
+* Feature: Added AI to the TaxoPress plugin, #1810
+* Update: Combine “Settings” and “License” into a single menu, #1856
+* Fixed: Merge feature deleting terms when using same terms in all input, #1904
+* Update: Update sidebar banner, #1905
+* Changes: Move Dandelion and OpenCalais to Pro, #1887
+* Update: Add OL/LI option to Terms Display Format, #1860
+* Fixed: Terms not displayed when using DESC ordering with numerical terms, #1859
+* Update: TaxoPress PRO ES-FR-IT Translation updates September 2023, #1855
+* Update: TaxoPress FREE Translation updates September 2023, #1854
+
+v3.10.2- 2023-09-26
+* Fixed: Auto Link issue with non english contents after v3.10.1 update, #1848
+
+v3.10.1- 2023-09-25
+* Feature: Allow users to have more than one taxonomy for "Suggest Terms", #1788
+* Fixed: Allow users to choose multiple post types for Related Posts, #1774
+* Fixed: Auto Link function issue with &lt; and &gt; content, #1829
+* Feature: Redirect and welcome message, #1751
+* Update: Prevent users from adding terms if it exists as a synonym, #1793
+* Fixed: Fatal Error after adding a custom taxomomy to a post, #1804
+* Fixed: Deprecated code in PHP 8.2, #1803
+* Fixed: Include synonyms in this count Autolink Term Usage Limit, #1805
+* Fixed: Allow Manage Terms box to expand for more content, #468
+* Update: Add a Pro upgrade message for exceptions in Auto Links, #1807
+* Fixed: Promo banner missing in Posts Screen, #1837
+* Update: ES-FR-IT Translation Updates TaxoPress PRO 3.10, #1785
+* Update: ES-FR-IT Translation Updates TaxoPress FREE August 2023, #1786
+
+v3.10.0- 2023-08-09
+* Feature: Add new TaxoPress > Posts Screen, #1748
+* Feature: Setting for which taxonomies to display on Posts screen, #1762
+* Update: Move "Mass Edit Terms" to Legacy, #1759
+* Update: Add "Count" column on the "Terms" page, #1757
+* Update: Auto add tags when using clicktag in classic editor, #1654
+* Update: Update settings "Save Changes" button and remove "Reset Options", #1770
+* Update: Add "Text to display before list" to "Related Posts" and "Terms Display", #1600
+* Update: Update Manage Terms Notification Messages, #1743
+* Update: Add Terms Descriptions column on "Terms" screen, #1706
+* Update: Update Synonyms error message, #1730
+* Fixed: Prevent "Merge Terms" from automatically adding Default Category, #1741
+* Fixed: Warning: Invalid argument supplied for foreach() on Posts page, #1740
+* Fixed: Uncaught TypeError: array_map(): Argument #2 ($array) must be of type array, #1729
+* Fixed: Duplicate not found label on Taxonomies screen, #1701
+* Update: Restrict synonym options to Pro version, #1723
+* Fixed: TAXOPRESS PRO - ES-FR-IT translation Updates July 21, 2023, #1722
+* Fixed: TAXOPRESS FREE - ES-FR-IT translation Updates July 21, 2023, #1721
+
+v3.9.0- 2023-07-20
+* Feature: Linked terms: Automatically add terms if main term is added [PRO] #801
+* Update: Allow custom input in "Prevent Auto Links Inside elements" [PRO], #1653
+* Fixed: Fix Exclude terms from Auto Links not working due to Case sensitivity, #1682
+* Update: Add a synonyms option for Auto Terms, #1674
+* Update: Make Auto Links Exclude terms bigger and Add Autocomplete to the field, #1680
+* Update: Include synonymns consideration when showing suggest terms, #1671
+* Update: Prevent a synonym from having the same name as existing terms, #1673
+* Update: TaxoFree_ES-IT_TranslationUpdates_June2023, #1675
+* Update: TAXO FREE French translation update June 2023, #1678
+
+v3.8.0- 2023-06-15
+* Feature: Added TaxoPress Dashboard Page #1136
+* Feature: Added term synonyms, ability to use multiple names for one tag [Pro Feature], #174
+* Feature: Show synonyms on the Terms screen [Pro Version], #1658
+* Feature: Synonyms option for Auto Links [Pro Version], #1656
+* Update: Clarify the attachment options for Auto Links, #1623
+* Fixed: Related Posts block is broken, #1652
+
+v3.7.4- 2023-05-17
+* Fixed: Settings changes not saving, #1635
+* Fixed: Auto Links has problems with the & character, #1638
+* Fixed: Auto Links has problems with the < > characters, #1637
+* Update: Update Pro links to the plugin page, #1636
+* Update: Updating Translations ES-FR-IT_TaxoPress 28 April 2023, #1639
+
+v3.7.3- 2023-04-18
+* Fixed: 3.7.2 Auto links issue, #1625
+* Fixed: "Maximum number of links per post" not working, #1627
+* Fixed: Term case isn't working, #1622
+* Fixed: Fix "Maximum number of links for the same term", #1620
+
+v3.7.2- 2023-04-13
+* Fixed: Fatal error on v3.7.1, #1610
+* Fixed: Autolink not working with custom taxonomy, #1611
+
+v3.7.1- 2023-04-12
+* Fixed: Auto Links not working since 3.7.0 update, #1602
+* Fixed: Backslash issues when saving Auto Terms fields, #1601
+* Fixed: Taxopress ES, FR, and IT Translation Updates, #1598
+
+v3.7.0- 2023-04-04
+* Fixed: Fixed taxonomy default term not working,, #1216
+* Fixed: Fixed terms taxonomy not retaining term taxonomy in quick edit, #1395
+* Fixed: "<" Characters been stripped out when using Auto Links, #1580
+* Fixed: Suggest Terms showing blank space in suggest term metabox, #1583
+* Update: Introduced new way to sanitize fields, #1579
+* Fixed: Display Terms not listing all terms, #1390
+* Fixed: global_term_enabled deprecated error, #1396
+* Update: Show private taxonomies terms when using private taxonomy filter in taxonomy screen, #1397
+* Update: Move "Remove Terms" options to "Terms" screen from manage terms, #1368
+* Update: Remove "Delete Terms" from "Manage Terms", #1367
+* Update: Remove manage terms table, #1592
+
+v3.6.7- 2023-03-13
+* Fixed: Suggest Terms adds child terms with Classic Editor, #1485
+* Update: Allow Private Taxonomies in Auto Terms, #1471
+* Update: Suggested improvement for Auto Terms, #1431
+* Update: Accessibility improvements to Suggested Terms, #1470
+* Fixed: Terms suggestions are not accessible, #1468
+* Update: Accessibility improvements for all tabs, #1469
+
+v3.6.6- 2023-03-07
+* Update: Increased minimum PHP requirement to PHP 7.2.5, #1553
+* Update: PHP 8.1 compatability, #1555
+* Fixed: Small fixes to Auto Links, #1459
+* Update: Add Support for WP Cron in Auto Terms, #1540
+* Update: Improve taxonomy REST API description, #1465
+* Fixed: PHP issues with the Pimple version, #1476
+
+v3.6.5- 2023-02-21
+* Fixed: Related Posts fatal error with WooCommerce filter, #1484
+* Fixed: incorrectly applying the the_title filter by just passing a single parameter, #1545
+* Fixed: PHP 8.1 crashing from using taxopress, #1480
+* Update: Format option value cleanup, #1531
+* Update: Notice warning about languages for Auto Terms and Auto Links, #1546
+* Update: TaxoPress-ES-FR-IT-translationUpdate-August23, #1456
+
+v3.6.4- 2022-08-23
+* Fixed: Auto link problem with ‘&’ in link #1377
+* Fixed: Issues with apostrophes in Auto Links #1444
+* Fixed: Warning: array_key_exists expects parameter 2 to be array, bool given #1439
+* Update: Add Terms Display "Font size minimum" and "Font size maximum" validation #1354
+* Fixed: Span problem on Auto Terms screen #1441
+* Update: Update "Automatically fill colors between maximum and minimum" to reflect right label #1371
+* Update: FR translation updated #1442
+
+v3.6.3- 2022-07-12
+* Fixed: Error with Suggested Terms on post screen #1433
+
+v3.6.2- 2022-06-16
+* Added: Allow more than one "Suggest Terms" metabox on post screen #1408
+* Update: Shortcode input should be read only. #1420
+* Fixed: The title of the metabox is always "automatic term suggestions" #1409
+* Update: Small typo in Auto Terms #1410
+* Update: Update the plugin description #1405
+* Fixed: Plugin breaks on PHP 5.6 #1419
 
 v3.6.1- 2022-05-04
 * Added: “Quick Edit” link to the Terms Screen #1359

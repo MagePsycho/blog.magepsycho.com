@@ -34,13 +34,6 @@ class CustomSidebars {
 	protected static $cap_required = 'edit_theme_options';
 
 	/**
-	 * URL to the documentation/info page of the pro plugin
-	 *
-	 * @var  string
-	 */
-	public static $pro_url = 'https://premium.wpmudev.org/project/custom-sidebars-pro/';
-
-	/**
 	 * Flag that specifies if the page is loaded in accessibility mode.
 	 * This plugin does not support accessibility mode!
 	 *
@@ -112,21 +105,16 @@ class CustomSidebars {
 			return;
 		}
 
-		$post_link = 'https://premium.wpmudev.org/blog/retiring-custom-sidebars/';
 		?>
 		<div id="wpmudev-cs-retirement-notice" class="notice notice-warning is-dismissible">
 			<p>
 				<?php
 				printf(
-					esc_html__(
-						'%1$sCustom Sidebars Notice %2$sStarting from version 5.7, WordPress will be using Gutenberg\'s block-based Widget Screen. Custom Sidebars is not compatible due to the fact that once Full Site Editing is in place, such plugins will not be required anymore. Therefore Custom Sidebars has been discontinued. If you have existing sidebars that you need to modify, you can switch back to a legacy Widgets screen by adding %3$s in your theme\'s functions.php file. You can read more about this %4$shere%5$s.',
-						'custom-sidebars'
-					),
+                    /* translators: %1$s,%2$s,%3$s is replaced with HTML tags that should not be escaped */
+					esc_html__('%1$sCustom Sidebars Notice %2$sStarting from version 5.7, WordPress will be using Gutenberg\'s block-based Widget Screen. Custom Sidebars is not compatible due to the fact that once Full Site Editing is in place, such plugins will not be required anymore. Therefore Custom Sidebars has been discontinued. If you have existing sidebars that you need to modify, you can switch back to a legacy Widgets screen by adding %3$s in your theme\'s functions.php file.',	'custom-sidebars'),
 					'<strong>',
 					'</strong><br />',
 					"<code>remove_theme_support( 'widgets-block-editor' );</code>",
-					"<a href=\"$post_link\" target=\"_blank\">",
-					'</a>'
 				);
 				?>
 			</p>
@@ -159,6 +147,7 @@ class CustomSidebars {
 
 		$return = array(
 			'success' => true,
+            /* translators: %1$s is replaced with the user ID */
 			'message' => sprintf( esc_html__( 'Notice dismissed for user %d', 'custom-sidebars' ), $user_id ),
 		);
 
@@ -264,35 +253,21 @@ class CustomSidebars {
 				'wpmudcs1',                            // Internal Pointer-ID
 				'#menu-appearance',                    // Point at
 				$plugin_title,
-				sprintf(
-					__(
-						'Now you can create and edit custom sidebars in your ' .
-						'<a href="%1$s">Widgets screen</a>!',
-						'custom-sidebars'
-					),
-					admin_url( 'widgets.php' )
-				)                                        // Body
+                /* translators: %1$s is replaced with the link to the Widgets screen */
+				sprintf(__('Now you can create and edit custom sidebars in your <a href="%1$s">Widgets screen</a>!','custom-sidebars'),	admin_url( 'widgets.php' ))
 			);
 		}
 
 		// Find out if the page is loaded in accessibility mode.
-		$flag                     = isset( $_GET['widgets-access'] ) ? $_GET['widgets-access'] : get_user_setting( 'widgets_access' );
+		$flag                     = isset( $_GET['widgets-access'] ) ? sanitize_text_field($_GET['widgets-access']) : get_user_setting( 'widgets_access' );
 		self::$accessibility_mode = ( 'on' == $flag );
 
 		// We don't support accessibility mode. Display a note to the user.
 		if ( true === self::$accessibility_mode ) {
 			$nonce = wp_create_nonce( 'widgets-access' );
 			lib3()->ui->admin_message(
-				sprintf(
-					__(
-						'<strong>Accessibility mode is not supported by the
-						%1$s plugin.</strong><br /><a href="%2$s">Click here</a>
-						to disable accessibility mode and use the %1$s plugin!',
-						'custom-sidebars'
-					),
-					$plugin_title,
-					admin_url( 'widgets.php?widgets-access=off&_wpnonce=' . urlencode( $nonce ) )
-				),
+                /* translators: %1$s is replaced with the URL of the link to disable acessibility mode */
+				sprintf(__('<strong>Accessibility mode is not supported by the Custom Sidebars plugin.</strong><br /><a href="%1$s">Click here</a>	to disable accessibility mode and use the Custom Sidebars plugin!', 'custom-sidebars'), $plugin_title,	admin_url( 'widgets.php?widgets-access=off&_wpnonce=' . urlencode( $nonce ) )),
 				'err',
 				'widgets'
 			);
@@ -315,7 +290,7 @@ class CustomSidebars {
 
 			// Display a message after import.
 			if ( ! empty( $_GET['cs-msg'] ) ) {
-				$msg = base64_decode( $_GET['cs-msg'] );
+				$msg = base64_decode( sanitize_text_field($_GET['cs-msg']) );
 
 				// Prevent XSS attacks...
 				$kses_args = array(
@@ -983,7 +958,7 @@ class CustomSidebars {
 			ob_end_clean(); }
 
 		header( 'Content-Type: text/plain' );
-		echo '' . $data;
+		CustomSidebars::wp_kses_wf('' . $data);
 		die();
 	}
 
@@ -1032,8 +1007,8 @@ class CustomSidebars {
 		// Catch any unexpected output via output buffering.
 		ob_start();
 
-		$action     = isset( $_POST['do'] ) ? $_POST['do'] : null;
-		$get_action = isset( $_GET['do'] ) ? $_GET['do'] : null;
+		$action     = isset( $_POST['do'] ) ? sanitize_key($_POST['do']) : null;
+		$get_action = isset( $_GET['do'] ) ? sanitize_key($_GET['do']) : null;
 
 		/**
 		 * Notify all extensions about the ajax call.
@@ -1116,14 +1091,6 @@ class CustomSidebars {
       array_unshift($actions, $widgets);
 		}
 
-    /*
-    $url = 'https://wordpress.org/support/plugin/custom-sidebars';
-		$actions['support'] = sprintf(
-			'<a href="%s">%s</a>',
-			esc_url( $url ),
-			__( 'Support', 'custom-sidebars' )
-    );
-    */
 		return $actions;
 	}
 
@@ -1251,4 +1218,306 @@ class CustomSidebars {
 	private static function sort_by_label( $a, $b ) {
 		return strcmp( $a->label, $b->label );
 	}
+
+    public static function wp_kses_wf($html)
+    {
+      add_filter('safe_style_css', function ($styles) {
+            $styles_wf = array(
+                'text-align',
+                'margin',
+                'color',
+                'float',
+                'border',
+                'background',
+                'background-color',
+                'border-bottom',
+                'border-bottom-color',
+                'border-bottom-style',
+                'border-bottom-width',
+                'border-collapse',
+                'border-color',
+                'border-left',
+                'border-left-color',
+                'border-left-style',
+                'border-left-width',
+                'border-right',
+                'border-right-color',
+                'border-right-style',
+                'border-right-width',
+                'border-spacing',
+                'border-style',
+                'border-top',
+                'border-top-color',
+                'border-top-style',
+                'border-top-width',
+                'border-width',
+                'caption-side',
+                'clear',
+                'cursor',
+                'direction',
+                'font',
+                'font-family',
+                'font-size',
+                'font-style',
+                'font-variant',
+                'font-weight',
+                'height',
+                'letter-spacing',
+                'line-height',
+                'margin-bottom',
+                'margin-left',
+                'margin-right',
+                'margin-top',
+                'overflow',
+                'padding',
+                'padding-bottom',
+                'padding-left',
+                'padding-right',
+                'padding-top',
+                'text-decoration',
+                'text-indent',
+                'vertical-align',
+                'width',
+                'display',
+            );
+
+            foreach ($styles_wf as $style_wf) {
+                $styles[] = $style_wf;
+            }
+            return $styles;
+        });
+
+        $allowed_tags = wp_kses_allowed_html('post');
+        $allowed_tags['input'] = array(
+            'type' => true,
+            'style' => true,
+            'class' => true,
+            'id' => true,
+            'checked' => true,
+            'disabled' => true,
+            'name' => true,
+            'size' => true,
+            'placeholder' => true,
+            'value' => true,
+            'data-*' => true,
+            'size' => true,
+            'disabled' => true
+        );
+
+        $allowed_tags['textarea'] = array(
+            'type' => true,
+            'style' => true,
+            'class' => true,
+            'id' => true,
+            'checked' => true,
+            'disabled' => true,
+            'name' => true,
+            'size' => true,
+            'placeholder' => true,
+            'value' => true,
+            'data-*' => true,
+            'cols' => true,
+            'rows' => true,
+            'disabled' => true,
+            'autocomplete' => true
+        );
+
+        $allowed_tags['select'] = array(
+            'type' => true,
+            'style' => true,
+            'class' => true,
+            'id' => true,
+            'checked' => true,
+            'disabled' => true,
+            'name' => true,
+            'size' => true,
+            'placeholder' => true,
+            'value' => true,
+            'data-*' => true,
+            'multiple' => true,
+            'disabled' => true
+        );
+
+        $allowed_tags['option'] = array(
+            'type' => true,
+            'style' => true,
+            'class' => true,
+            'id' => true,
+            'checked' => true,
+            'disabled' => true,
+            'name' => true,
+            'size' => true,
+            'placeholder' => true,
+            'value' => true,
+            'selected' => true,
+            'data-*' => true
+        );
+        $allowed_tags['optgroup'] = array(
+            'type' => true,
+            'style' => true,
+            'class' => true,
+            'id' => true,
+            'checked' => true,
+            'disabled' => true,
+            'name' => true,
+            'size' => true,
+            'placeholder' => true,
+            'value' => true,
+            'selected' => true,
+            'data-*' => true,
+            'label' => true
+        );
+
+        $allowed_tags['a'] = array(
+            'href' => true,
+            'data-*' => true,
+            'class' => true,
+            'style' => true,
+            'id' => true,
+            'target' => true,
+            'data-*' => true,
+            'role' => true,
+            'aria-controls' => true,
+            'aria-selected' => true,
+            'disabled' => true
+        );
+
+        $allowed_tags['div'] = array(
+            'style' => true,
+            'class' => true,
+            'id' => true,
+            'data-*' => true,
+            'role' => true,
+            'aria-labelledby' => true,
+            'value' => true,
+            'aria-modal' => true,
+            'tabindex' => true
+        );
+
+        $allowed_tags['li'] = array(
+            'style' => true,
+            'class' => true,
+            'id' => true,
+            'data-*' => true,
+            'role' => true,
+            'aria-labelledby' => true,
+            'value' => true,
+            'aria-modal' => true,
+            'tabindex' => true
+        );
+
+        $allowed_tags['span'] = array(
+            'style' => true,
+            'class' => true,
+            'id' => true,
+            'data-*' => true,
+            'aria-hidden' => true
+        );
+
+        $allowed_tags['style'] = array(
+            'class' => true,
+            'id' => true,
+            'type' => true
+        );
+
+        $allowed_tags['fieldset'] = array(
+            'class' => true,
+            'id' => true,
+            'type' => true
+        );
+
+        $allowed_tags['link'] = array(
+            'class' => true,
+            'id' => true,
+            'type' => true,
+            'rel' => true,
+            'href' => true,
+            'media' => true
+        );
+
+        $allowed_tags['form'] = array(
+            'style' => true,
+            'class' => true,
+            'id' => true,
+            'method' => true,
+            'action' => true,
+            'data-*' => true
+        );
+
+        $allowed_tags['script'] = array(
+            'class' => true,
+            'id' => true,
+            'type' => true,
+            'src' => true
+        );
+
+        echo wp_kses($html, $allowed_tags);
+
+        add_filter('safe_style_css', function ($styles) {
+            $styles_wf = array(
+                'text-align',
+                'margin',
+                'color',
+                'float',
+                'border',
+                'background',
+                'background-color',
+                'border-bottom',
+                'border-bottom-color',
+                'border-bottom-style',
+                'border-bottom-width',
+                'border-collapse',
+                'border-color',
+                'border-left',
+                'border-left-color',
+                'border-left-style',
+                'border-left-width',
+                'border-right',
+                'border-right-color',
+                'border-right-style',
+                'border-right-width',
+                'border-spacing',
+                'border-style',
+                'border-top',
+                'border-top-color',
+                'border-top-style',
+                'border-top-width',
+                'border-width',
+                'caption-side',
+                'clear',
+                'cursor',
+                'direction',
+                'font',
+                'font-family',
+                'font-size',
+                'font-style',
+                'font-variant',
+                'font-weight',
+                'height',
+                'letter-spacing',
+                'line-height',
+                'margin-bottom',
+                'margin-left',
+                'margin-right',
+                'margin-top',
+                'overflow',
+                'padding',
+                'padding-bottom',
+                'padding-left',
+                'padding-right',
+                'padding-top',
+                'text-decoration',
+                'text-indent',
+                'vertical-align',
+                'width'
+            );
+
+            foreach ($styles_wf as $style_wf) {
+                if (($key = array_search($style_wf, $styles)) !== false) {
+                    unset($styles[$key]);
+                }
+            }
+            return $styles;
+      });
+  }
 };

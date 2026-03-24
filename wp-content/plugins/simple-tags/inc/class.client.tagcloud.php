@@ -7,31 +7,7 @@ class SimpleTags_Client_TagCloud {
 	 * SimpleTags_Client_TagCloud constructor.
 	 */
 	public function __construct() {
-		if ( 1 === (int) SimpleTags_Plugin::get_option_value( 'allow_embed_tcloud' ) ) {
-			add_shortcode( 'st_tag_cloud', array( __CLASS__, 'shortcode' ) );
-			add_shortcode( 'st-tag-cloud', array( __CLASS__, 'shortcode' ) );
-		}
-	}
 
-	/**
-	 * Replace marker by a tag cloud in post content, use ShortCode
-	 *
-	 * @param array $atts
-	 *
-	 * @return string
-	 */
-	public static function shortcode( $atts ) {
-        $atts = shortcode_atts( array( 'param' => '' ), $atts );
-		extract( $atts );
-
-		$param = html_entity_decode( $param );
-		$param = trim( $param );
-
-		if ( empty( $param ) ) {
-			$param = 'title=';
-		}
-
-		return self::extendedTagCloud( $param, false );
 	}
 
 	/**
@@ -60,22 +36,27 @@ class SimpleTags_Client_TagCloud {
 			'selection'   => 'desc',
 			'orderby'     => 'random',
 			'order'       => 'asc',
-			'format'      => 'flat',
+			'format'      => 'border',
 			'xformat'     => __( '<a href="%tag_link%" id="tag-link-%tag_id%" class="st-tags t%tag_scale%" title="%tag_count% topics" %tag_rel% style="%tag_size% %tag_color%">%tag_name%</a>', 'simple-tags' ),
-			'number'      => 45,
+			'number'      => 20,
 			'notagstext'  => __( 'No tags.', 'simple-tags' ),
 			'title'       => __( '<h4>Tag Cloud</h4>', 'simple-tags' ),
 			'maxcolor'    => '#000000',
-			'mincolor'    => '#CCCCCC',
-			'largest'     => 22,
-			'smallest'    => 8,
+			'mincolor'    => '#353535',
+			'largest'     => 12,
+			'smallest'    => 12,
 			'unit'        => 'pt',
 			'taxonomy'    => 'post_tag', // Note: saved as an option but no UI to set it
+			'parent_term' => '',
+			'display_mode' => 'parents_and_sub',
 			// Simple Tag other defaults
 			'size'        => 'true',
 			'color'       => 'true',
 			'exclude'     => '',
+			'exclude_terms' => '',
 			'include'     => '',
+			'term_selection_mode' => 'automatic',
+			'include_terms' => '',
 			'limit_days'  => 0,
 			'min_usage'   => 0,
 			'category'    => 0,
@@ -85,10 +66,14 @@ class SimpleTags_Client_TagCloud {
 			'post_type'   => '',
 			'wrap_class'  => '',
 			'link_class'  => '',
+			'before'      => '',
+			'after'       => '',
+			'hide_terms' => 0,
 		);
 
 		// Get options
 		$options = SimpleTags_Plugin::get_option();
+		$enable_hidden_terms = SimpleTags_Plugin::get_option_value('enable_hidden_terms');
 
 		// Get values in DB
 		$defaults['selectionby'] = $options['cloud_selectionby'];
@@ -106,6 +91,8 @@ class SimpleTags_Client_TagCloud {
 		$defaults['smallest']    = $options['cloud_min_size'];
 		$defaults['unit']        = $options['cloud_unit'];
 		$defaults['taxonomy']    = $options['cloud_taxonomy'];
+		$defaults['parent_term'] = $options['cloud_parent_term'];
+		$defaults['display_mode'] = $options['cloud_display_mode'];
 
 		$adv_usage = $options['cloud_adv_usage'];
 		if ( empty( $args ) ) {
@@ -143,13 +130,76 @@ class SimpleTags_Client_TagCloud {
 		$taxonomy = self::_get_current_taxonomy( $args['taxonomy'] );
 
 		// Get terms
-		$terms = self::getTags( $args, $taxonomy );
+		$term_selection_mode = isset($args['term_selection_mode']) ? $args['term_selection_mode'] : 'automatic';
+		
+		if ($term_selection_mode === 'custom') {
+			$terms = [];
+			if (!empty($args['include_terms'])) {
+				$include_terms_array = array_map('trim', explode(',', $args['include_terms']));
+				foreach ($include_terms_array as $term_name) {
+					if (!empty($term_name)) {
+						$term = get_term_by('name', $term_name, $taxonomy);
+						if ($term && !is_wp_error($term)) {
+							$terms[] = $term;
+						}
+					}
+				}
+			}
+		} elseif ($term_selection_mode === 'combined') {
+			$terms = self::getTags($args, $taxonomy);
+
+			if (!empty($args['include_terms'])) {
+				$include_terms_array = array_map('trim', explode(',', $args['include_terms']));
+				$existing_term_ids = wp_list_pluck($terms, 'term_id');
+				
+				foreach ($include_terms_array as $term_name) {
+					if (!empty($term_name)) {
+						$term = get_term_by('name', $term_name, $taxonomy);
+						if ($term && !is_wp_error($term) && !in_array($term->term_id, $existing_term_ids)) {
+							$terms[] = $term;
+							$existing_term_ids[] = $term->term_id;
+						}
+					}
+				}
+			}
+		} else {
+			$terms = self::getTags($args, $taxonomy);
+		}
+
+		// Remove hidden terms if enabled
+		if ($enable_hidden_terms && !empty($args['hide_terms'])) {
+			$hidden_terms = get_transient('taxopress_hidden_terms_' . $args['taxonomy']);
+			if (!empty($hidden_terms) && is_array($hidden_terms)) {
+				$terms = array_filter($terms, function ($term) use ($hidden_terms) {
+					return !in_array($term->term_id, $hidden_terms);
+				});
+			}
+		}
+
 		extract( $args ); // Params to variables
+
+		// Process exclude_terms
+		if ( ! empty( $exclude_terms ) ) {
+			// Convert the exclude terms string into a set (associative array) for faster lookup
+			$exclude_terms_set = array_flip(array_map('strtolower', array_map('trim', explode(',', $exclude_terms))));
+		} else {
+			$exclude_terms_set = array();
+		}
+
+		// Filter out excluded terms
+		if ( ! empty( $exclude_terms_set ) ) {
+			// Use array_filter to remove terms that exist in the exclude set
+			$terms = array_filter( $terms, function( $term ) use ( $exclude_terms_set ) {
+				return ! isset( $exclude_terms_set[ strtolower($term->name) ] );
+			});
+		}
 
 		// If empty use default xformat !
 		if ( empty( $xformat ) ) {
 			$xformat = $defaults['xformat'];
 		}
+
+		$xformat = taxopress_sanitize_text_field($xformat);
 
         //remove title if in settings
         if((int)$hide_title > 0){
@@ -157,6 +207,21 @@ class SimpleTags_Client_TagCloud {
         }
 
 		if ( empty( $terms ) ) {
+			// Check if custom mode is selected with empty include_terms
+			if ($term_selection_mode === 'custom' && empty($args['include_terms'])) {
+				$message_text = __('You have selected Custom mode but the "Custom terms to display" field is empty. Please add terms to display or switch to Automatic mode.', 'simple-tags');
+				// Apply the same styling as terms would have
+				$font_size = !empty($smallest) ? $smallest : 12;
+				$font_color = !empty($mincolor) ? $mincolor : '#353535';
+				$font_unit = !empty($unit) ? $unit : 'pt';
+				$custom_mode_message = '<span style="font-size: ' . esc_attr($font_size) . esc_attr($font_unit) . '; color: ' . esc_attr($font_color) . ';">' . esc_html($message_text) . '</span>';
+				if((int)$hide_output === 0){
+					return SimpleTags_Client::output_content( 'st-tag-cloud', $format, $title, $custom_mode_message, $copyright, '', $wrap_class, $link_class );
+				}else{
+					return '';
+				}
+			}
+			
             if((int)$hide_output === 0){
 			    return SimpleTags_Client::output_content( 'st-tag-cloud', $format, $title, $notagstext, $copyright, '', $wrap_class, $link_class );
             }else{
@@ -212,21 +277,86 @@ class SimpleTags_Client_TagCloud {
 			$xformat = str_replace( '%tag_size%', '', $xformat );
 		}
 
+
 		// Order terms before output
 		// count, name, rand | asc, desc
+		$orderby = strtolower($orderby);
+		$order = strtolower($order);
 
-		$orderby = strtolower( $orderby );
-		if ( $orderby == 'count' ) {
-			asort( $counts );
-		} elseif ( $orderby == 'name' ) {
-			uksort( $counts, array( __CLASS__, 'uksort_by_name' ) );
-		} else { // rand
-			SimpleTags_Client::random_array( $counts );
-		}
+		if (in_array($format, ['parent/child']) && $args['display_mode'] === 'parents_and_sub') {
+			$terms = self::getTags($args, $taxonomy);
+		
+			// Check if terms is empty or invalid
+			if (empty($terms)) {
+				return SimpleTags_Client::output_content('st-tag-cloud', $format, $title, $notagstext, $copyright, '', $wrap_class, $link_class);
+			}
+		
+			// First, group terms by parent term
+			$grouped_terms = [];
+			foreach ($terms as $term) {
+				// Only group terms with a parent (excluding standalone terms)
+				if ($term->parent != 0) {
+					$parent_id = $term->parent;
+					if (!isset($grouped_terms[$parent_id])) {
+						$grouped_terms[$parent_id] = [];
+					}
+					$grouped_terms[$parent_id][] = $term;
+				}
+			}
+		
+			// Then, sort each group by name
+			foreach ($grouped_terms as &$parent_group) {
+				usort($parent_group, function ($a, $b) {
+					return strcmp($a->name, $b->name);
+				});
+			}
+		
+			// Merge all grouped terms into a single array, ensuring correct parent-child order
+			$terms = [];
+			foreach ($grouped_terms as $parent_group) {
+				$terms = array_merge($terms, $parent_group);
+			}
+		} 
 
-		$order = strtolower( $order );
-		if ( $order == 'desc' && $orderby != 'random' ) {
-			$counts = array_reverse( $counts );
+		// Custom drag-and-drop order: always check first!
+		if ($orderby === 'taxopress_term_order') {
+			$custom_order = get_option('taxopress_term_order_' . $taxonomy, []);
+			if (!empty($custom_order)) {
+				$terms_by_id = [];
+				foreach ($terms_data as $term_name => $term_obj) {
+					if (is_object($term_obj) && isset($term_obj->term_id)) {
+						$terms_by_id[$term_obj->term_id] = $term_obj;
+					}
+				}
+				$ordered_terms = [];
+				foreach ($custom_order as $term_id) {
+					if (isset($terms_by_id[$term_id])) {
+						$ordered_terms[$terms_by_id[$term_id]->name] = $terms_by_id[$term_id]->count;
+						unset($terms_by_id[$term_id]);
+					}
+				}
+				// Add any terms not in custom order at the end
+				foreach ($terms_by_id as $term_obj) {
+					$ordered_terms[$term_obj->name] = $term_obj->count;
+				}
+				if ($order === 'desc') {
+					$ordered_terms = array_reverse($ordered_terms, true);
+				}
+				$counts = $ordered_terms;
+			}
+		} else {
+			// Default sorting logic
+			if ($orderby == 'count') {
+				asort($counts);
+			} elseif ($orderby == 'name') {
+				uksort($counts, [__CLASS__, 'uksort_by_name']);
+			} else { // rand
+				SimpleTags_Client::random_array($counts);
+			}
+			$order = strtolower($order);
+			if ($order == 'desc' && $orderby != 'random') {
+				$counts = array_reverse($counts, true);
+			}
 		}
 
 		$output = array();
@@ -244,10 +374,20 @@ class SimpleTags_Client_TagCloud {
 
 			$term         = $terms_data[ $term_name ];
 			$scale_result = (int) ( $scale <> 0 ? ( ( $term->count - $minval ) * $scale + $minout ) : ( $scale_max - $scale_min ) / 2 );
-			$output[]     = SimpleTags_Client::format_internal_tag( $xformat, $term, $rel, $scale_result, $scale_max, $scale_min, $largest, $smallest, $unit, $maxcolor, $mincolor );
+			//$output[]     = SimpleTags_Client::format_internal_tag( $xformat, $term, $rel, $scale_result, $scale_max, $scale_min, $largest, $smallest, $unit, $maxcolor, $mincolor );
+			   $formatted = SimpleTags_Client::format_internal_tag( $xformat, $term, $rel, $scale_result, $scale_max, $scale_min, $largest, $smallest, $unit, $maxcolor, $mincolor );
+			if ($format === 'table') {
+				$output[] = [
+					'html' => $formatted,
+					'count' => $term->count,
+					'term_name' => $term->name,
+				];
+			} else {
+				$output[] = $formatted;
+			}
 		}
 
-		return SimpleTags_Client::output_content( 'st-tag-cloud', $format, $title, $output, $copyright, '', $wrap_class, $link_class );
+		return SimpleTags_Client::output_content( 'st-tag-cloud', $format, $title, $output, $copyright, '', $wrap_class, $link_class, $before, $after, $taxonomy );
 	}
 
 
@@ -265,17 +405,19 @@ class SimpleTags_Client_TagCloud {
 			'selection'   => 'desc',
 			'orderby'     => 'random',
 			'order'       => 'asc',
-			'format'      => 'flat',
+			'format'      => 'border',
 			'xformat'     => __( '<a href="%tag_link%" id="tag-link-%tag_id%" class="st-tags t%tag_scale%" title="%tag_count% topics" %tag_rel% style="%tag_size% %tag_color%">%tag_name%</a>', 'simple-tags' ),
-			'number'      => 45,
+			'number'      => 20,
 			'notagstext'  => __( 'No tags.', 'simple-tags' ),
 			'title'       => __( '<h4>Tag Cloud</h4>', 'simple-tags' ),
 			'maxcolor'    => '#000000',
-			'mincolor'    => '#CCCCCC',
-			'largest'     => 22,
-			'smallest'    => 8,
+			'mincolor'    => '#353535',
+			'largest'     => 12,
+			'smallest'    => 12,
 			'unit'        => 'pt',
 			'taxonomy'    => 'post_tag', // Note: saved as an option but no UI to set it
+			'parent_term' => '',
+			'display_mode' => 'parents_and_sub',
 			// Simple Tag other defaults
 			'size'        => 'true',
 			'color'       => 'true',
@@ -283,11 +425,13 @@ class SimpleTags_Client_TagCloud {
 			'include'     => '',
 			'limit_days'  => 0,
 			'min_usage'   => 0,
-			'category'    => 0
+			'category'    => 0,
+			'hide_terms' => 0,
 		);
 
 		// Get options
 		$options = SimpleTags_Plugin::get_option();
+		$enable_hidden_terms = SimpleTags_Plugin::get_option_value('enable_hidden_terms');
 
 		// Get values in DB
 		$defaults['selectionby'] = $options['cloud_selectionby'];
@@ -305,6 +449,8 @@ class SimpleTags_Client_TagCloud {
 		$defaults['smallest']    = $options['cloud_min_size'];
 		$defaults['unit']        = $options['cloud_unit'];
 		$defaults['taxonomy']    = $options['cloud_taxonomy'];
+		$defaults['parent_term'] = $options['cloud_parent_term'];
+		$defaults['display_mode'] = $options['cloud_display_mode'];
 
 		$adv_usage = $options['cloud_adv_usage'];
 		if ( empty( $args ) ) {
@@ -343,6 +489,16 @@ class SimpleTags_Client_TagCloud {
 
 		// Get terms
 		$terms = self::getTags( $args, $taxonomy );
+
+		// Remove hidden terms if enabled
+		if ($enable_hidden_terms && !empty($args['hide_terms'])) {
+			$hidden_terms = get_transient('taxopress_hidden_terms_' . $args['taxonomy']);
+			if (!empty($hidden_terms) && is_array($hidden_terms)) {
+				$terms = array_filter($terms, function ($term) use ($hidden_terms) {
+					return !in_array($term->term_id, $hidden_terms);
+				});
+			}
+		}
 		extract( $args ); // Params to variables
 
 		// If empty use default xformat !
@@ -466,8 +622,8 @@ class SimpleTags_Client_TagCloud {
 	 *
 	 * @return array
 	 */
-	public static function getTags( $args = '', $taxonomy = 'post_tag' ) {
-		$key = md5( maybe_serialize( $args ) . $taxonomy );
+	public static function getTags( $args = '', $taxonomy = 'post_tag', $post_type = '' ) {
+		$key = md5( maybe_serialize( $args ) . $taxonomy . (isset($args['parent_term']) ? $args['parent_term'] : '') . (isset($args['display_mode']) ? $args['display_mode'] : ''));
 
 		// Get cache if exist
 		if ( $cache = wp_cache_get( 'st_get_tags', 'simple-tags' ) ) {
@@ -477,15 +633,172 @@ class SimpleTags_Client_TagCloud {
 		}
 
 		// Get tags
-		$terms = self::getTerms( $taxonomy, $args );
-		if ( empty( $terms ) ) {
-			return array();
+		if ( isset( $args['taxonomy'] ) ) {
+			$taxonomy = $args['taxonomy'];
 		}
 
-		$cache[ $key ] = $terms;
-		wp_cache_set( 'st_get_tags', $cache, 'simple-tags' );
+		if ( isset( $args['parent_term'] ) ) {
+			$parent_term = $args['parent_term'];
+		}
 
-		$terms = apply_filters( 'st_get_tags', $terms, $args );
+		if ( isset( $args['display_mode'] ) ) {
+			$display_mode = $args['display_mode'];
+		}
+
+		if ( isset( $args['max'] ) ) {
+			$max_terms = intval( $args['max'] );
+		} else {
+			$max_terms = 20;
+		}
+
+		if ( isset( $args['hide_terms'] ) ) {
+			$hide_terms = $args['hide_terms'];
+		}
+  
+		$term_args = [
+			'taxonomy'   => $taxonomy,
+			'hide_empty' => false,
+			'number' => $max_terms,
+		];
+
+		// exclude hidden terms from being queried for display at all
+		if ($hide_terms && SimpleTags_Plugin::get_option_value('enable_hidden_terms')) {
+			$hidden_terms = get_transient('taxopress_hidden_terms_' . $taxonomy);
+			if (!empty($hidden_terms) && is_array($hidden_terms)) {
+					$term_args['exclude'] = $hidden_terms;
+			}
+		}
+	
+		$is_hierarchical = is_taxonomy_hierarchical($taxonomy);
+		
+		if ($is_hierarchical && isset($args['parent_term'])) {
+			$parent_term = $args['parent_term'];
+			$display_mode = isset($args['display_mode']) ? $args['display_mode'] : '';
+	
+			if ($parent_term === 'all') {
+				if ($display_mode === 'parents_only') {
+					$term_args['parent'] = 0;
+				} elseif ($display_mode === 'sub_terms_only') {
+					// Get all parent terms
+					$parent_terms = get_terms([
+						'taxonomy'   => $taxonomy,
+						'parent'     => 0,
+						'hide_empty' => false
+					]);
+
+					$parent_ids = wp_list_pluck($parent_terms, 'term_id');
+	
+					if (!empty($parent_ids)) {
+						$sub_terms = [];
+						foreach ($parent_ids as $parent_id) {
+							$terms = get_terms([
+								'taxonomy'   => $taxonomy,
+								'parent'     => $parent_id,
+								'hide_empty' => false,
+								'number'     => $max_terms
+							]);
+							$sub_terms = array_merge($sub_terms, $terms);
+							if (count($sub_terms) >= $max_terms) {
+								break;
+							}
+						}
+						$term_args['include'] = wp_list_pluck($sub_terms, 'term_id');
+					} else {
+						$term_args['parent'] = -1;
+					}
+				}
+			} else {
+				// Specific parent term selected
+				if ($display_mode === 'parents_only') {
+					$term_args['include'] = [$parent_term];
+				} elseif ($display_mode === 'sub_terms_only') {
+					$term_args['parent'] = $parent_term;
+				} else {
+					// Both parent and sub-terms
+					$parent_terms = get_terms([
+						'taxonomy'   => $taxonomy,
+						'include'    => [$parent_term],
+						'hide_empty' => false
+					]);
+					$sub_terms = get_terms([
+						'taxonomy'   => $taxonomy,
+						'parent'     => $parent_term,
+						'hide_empty' => false,
+						'number'     => $max_terms
+					]);
+	
+					$all_terms = array_merge($parent_terms, $sub_terms);
+					$term_args['include'] = wp_list_pluck(array_slice($all_terms, 0, $max_terms), 'term_id');
+				}
+			}
+		}
+	
+		// Ensure `max_terms` is always applied
+		if (!empty($term_args['include'])) {
+			$term_args['include'] = array_slice($term_args['include'], 0, $max_terms);
+		}
+			
+
+		if (isset($args['orderby'])) {
+			$term_args['orderby'] = $args['orderby'];
+		}
+		if (isset($args['order'])) {
+			$term_args['order'] = $args['order'];
+		}
+		
+		if (!empty($args['limit_days'])) {
+			$recent_posts = get_posts([
+				'post_type'      => $post_type ?: 'any',
+				'post_status'    => 'publish',
+				'date_query'     => [
+					[
+						'after' => $args['limit_days'] . ' days ago',
+						'inclusive' => false,
+					],
+				],
+				'fields'         => 'ids',
+				'posts_per_page' => -1,
+			]);
+			if (!empty($recent_posts)) {
+				$terms = get_terms([
+					'taxonomy'   => $taxonomy,
+					'object_ids' => $recent_posts,
+					'hide_empty' => false,
+					'number'     => $max_terms,
+				]);
+			} else {
+				$terms = [];
+			}
+		} else {
+			$terms = get_terms($term_args);
+		}
+
+		if (isset($args['orderby']) && strtolower($args['orderby']) === 'random' && is_array($terms)) {
+			shuffle($terms);
+			if (isset($args['order']) && strtolower($args['order']) === 'desc') {
+				$terms = array_reverse($terms);
+			}
+		}
+		if (empty($terms)) {
+			return [];
+		}
+
+		if ($hide_terms && SimpleTags_Plugin::get_option_value('enable_hidden_terms')) {
+			$hidden_terms = get_transient('taxopress_hidden_terms_' . $taxonomy);
+			if (!empty($hidden_terms) && is_array($hidden_terms)) {
+				$hidden_terms = array_flip($hidden_terms);
+				$terms = array_filter($terms, function ($term) use ($hidden_terms) {
+					return !isset($hidden_terms[$term->term_id]);
+				});
+			}
+		}
+	
+		// Cache the result
+		$cache = [];
+		$cache[$key] = $terms;
+		wp_cache_set('st_get_tags', $cache, 'simple-tags');
+	
+		$terms = apply_filters('st_get_tags', $terms, $args);
 
 		return $terms;
 	}
@@ -687,6 +1000,9 @@ class SimpleTags_Client_TagCloud {
 		$where .= $inclusions;
 
 		$exclusions = '';
+
+		$excluded_terms = array(); // Collect all terms to exclude
+
 		if ( ! empty( $exclude_tree ) ) {
 			$excluded_trunks = wp_parse_id_list( $exclude_tree );
 			foreach ( $excluded_trunks as $extrunk ) {
@@ -702,6 +1018,9 @@ class SimpleTags_Client_TagCloud {
 						$exclusions .= ' AND t.term_id <> ' . intval( $exterm ) . ' ';
 					}
 				}
+
+				 // Also collect terms for batch exclusion
+				 $excluded_terms = array_merge( $excluded_terms, $excluded_children );
 			}
 		}
 
@@ -714,6 +1033,17 @@ class SimpleTags_Client_TagCloud {
 					$exclusions .= ' AND t.term_id <> ' . intval( $exterm ) . ' ';
 				}
 			}
+
+			 // Also collect terms for batch exclusion
+			 $excluded_terms = array_merge( $excluded_terms, $exterms );
+		}
+
+		// Batch exclusion logic with 'NOT IN'
+		$excluded_terms = array_unique( $excluded_terms );
+		if ( ! empty( $excluded_terms ) ) {
+			$excluded_terms_sql = implode( ',', array_map( 'intval', $excluded_terms ) );
+			// Batch exclusion will be combined with original exclusion logic
+			$exclusions .= " AND t.term_id NOT IN ($excluded_terms_sql)";
 		}
 
 		if ( ! empty( $exclusions ) ) {
@@ -841,7 +1171,7 @@ class SimpleTags_Client_TagCloud {
 		// don't limit the query results when we have to descend the family tree
 		if ( ! empty( $number ) && ! $hierarchical && empty( $child_of ) && '' == $parent ) {
 			if ( $offset ) {
-                $query = $wpdb->prepare("SELECT $select_this
+                $query = $wpdb->prepare("SELECT DISTINCT $select_this
 			FROM $wpdb->terms AS t
 			INNER JOIN $wpdb->term_taxonomy AS tt ON t.term_id = tt.term_id
 			$join_relation
@@ -853,7 +1183,7 @@ class SimpleTags_Client_TagCloud {
             $offset,
             $number );
 			} else {
-                $query = $wpdb->prepare("SELECT $select_this
+                $query = $wpdb->prepare("SELECT DISTINCT $select_this
 			FROM $wpdb->terms AS t
 			INNER JOIN $wpdb->term_taxonomy AS tt ON t.term_id = tt.term_id
 			$join_relation
@@ -865,7 +1195,7 @@ class SimpleTags_Client_TagCloud {
             $number );
 			}
 		} else {
-            $query = $wpdb->prepare("SELECT $select_this
+            $query = $wpdb->prepare("SELECT DISTINCT $select_this
 			FROM $wpdb->terms AS t
 			INNER JOIN $wpdb->term_taxonomy AS tt ON t.term_id = tt.term_id
 			$join_relation

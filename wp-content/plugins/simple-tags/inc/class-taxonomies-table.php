@@ -63,12 +63,15 @@ class Taxonomy_List extends WP_List_Table
     function get_columns()
     {
         $columns = [
+            'cb'          => '',
             'name'        => __('Name', 'simple-tags'),
             'registration_key' => __('Registration key', 'simple-tags'),
             'description' => __('Description', 'simple-tags'),
             'active'      => __('Active', 'simple-tags'),
             'posttypes'   => __('Post Types', 'simple-tags'),
             'count'   => __('Count', 'simple-tags'),
+            'taxopress_order' => __('Order', 'simple-tags'),
+            'edited_with_taxopress'  => __('Edited', 'simple-tags'),
         ];
 
         return $columns;
@@ -87,10 +90,23 @@ class Taxonomy_List extends WP_List_Table
         return !empty($item->$column_name) ? $item->$column_name : '&mdash;';
     }
 
+    /**
+     * The checkbox column
+     *
+     * @param object $item
+     *
+     * @return string|void
+     */
+    protected function column_cb($item)
+    {
+    
+        return '';
+    }
+
     /** Text displayed when no stterm data is available */
     public function no_items()
     {
-        _e('No term avaliable.', 'simple-tags');
+        _e('No taxonomies found.', 'simple-tags');
     }
 
     /**
@@ -148,6 +164,25 @@ class Taxonomy_List extends WP_List_Table
          * Fetch the data
          */
         $data = self::get_st_taxonomies();
+
+        /**
+         * Filter by post type if requested
+         */
+        $selected_post_type = isset($_GET['taxopress_taxonomy_post_type'])
+            ? sanitize_key(wp_unslash($_GET['taxopress_taxonomy_post_type']))
+            : '';
+
+        if (!empty($selected_post_type) && 'all' !== $selected_post_type) {
+            $data_filtered = [];
+            foreach ($data as $item) {
+                if (!empty($item->object_type) && is_array($item->object_type)) {
+                    if (in_array($selected_post_type, $item->object_type, true)) {
+                        $data_filtered[] = $item;
+                    }
+                }
+            }
+            $data = $data_filtered;
+        }
 
         /**
          * Handle search
@@ -425,5 +460,32 @@ class Taxonomy_List extends WP_List_Table
         return $title;
     }
 
-
+    /**
+     * The edited_with_taxopress column
+     *
+     * @param object $item
+     * @return string
+     */
+    protected function column_edited_with_taxopress($item)
+    {
+        $external_taxonomies = get_option('taxopress_external_taxonomies', array());
+        $taxopress_taxonomies = taxopress_get_taxonomy_data();
+        
+        if ($item->name === 'media_tag' || array_key_exists($item->name, $taxopress_taxonomies) || array_key_exists($item->name, $external_taxonomies)) {
+            return '<div class="pp-tooltips-library" data-toggle="tooltip">
+                    <span class="dashicons dashicons-yes-alt taxopress-edited-indicator taxopress-edited-yes"></span>
+                    <div class="taxopress tooltip-text">This taxonomy has been edited with TaxoPress</div>
+                    </div>';
+        } else {
+            return '<div class="pp-tooltips-library" data-toggle="tooltip">
+                    <span class="dashicons dashicons-no-alt taxopress-edited-indicator taxopress-edited-no"></span>
+                    <div class="taxopress tooltip-text">This taxonomy has not been edited with TaxoPress</div>
+                    </div>';
+        }
+    }
+    
+    protected function column_taxopress_order($item)
+    {
+        echo apply_filters('taxopress_order_column', $item);
+    }
 }

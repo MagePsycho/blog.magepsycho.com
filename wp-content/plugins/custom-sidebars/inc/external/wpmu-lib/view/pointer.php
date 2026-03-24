@@ -51,7 +51,7 @@ $code = str_replace( array( "\r", "\n" ), '', $code );
 			return;
 		}
 		if ( jQuery().pointer !== undefined ) {
-			var target = jQuery( '<?php echo $html_el; ?>' );
+			var target = jQuery( '<?php CustomSidebars::wp_kses_wf( $html_el ); ?>' );
 			if ( ! target.length ) { return; }
 			target = target.first();
 
@@ -74,7 +74,7 @@ $code = str_replace( array( "\r", "\n" ), '', $code );
 
 			// Insert the pointer HTML code
 			target.pointer({
-				content: '<?php echo $code; ?>',
+				content: '<?php CustomSidebars::wp_kses_wf( $code ); ?>',
 				position: {
 					edge: 'left',
 					align: 'center'
@@ -92,7 +92,7 @@ $code = str_replace( array( "\r", "\n" ), '', $code );
 
 					<?php if ( $once ) : ?>
 					jQuery.post( ajaxurl, {
-						pointer: '<?php echo esc_js( $pointer_id ) ?>',
+						pointer: '<?php echo esc_attr( $pointer_id ); ?>',
 						action: 'dismiss-wp-pointer'
 					});
 					<?php endif; ?>

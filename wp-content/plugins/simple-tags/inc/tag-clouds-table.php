@@ -277,6 +277,7 @@ class TagClouds_List extends WP_List_Table
                 ),
         ];
 
+        $actions = apply_filters('taxopress_tagclouds_row_actions', $actions, $item);
         return $column_name === $primary ? $this->row_actions($actions, false) : '';
     }
 
@@ -360,9 +361,14 @@ class TagClouds_List extends WP_List_Table
 
         $days_options = [
             'flat' => esc_attr__( 'Cloud', 'simple-tags' ),
-            'list' => esc_attr__( 'List (UL/LI)', 'simple-tags' ),
+            'list' => esc_attr__( 'Unordered List (UL/LI)', 'simple-tags' ),
+            'ol' => esc_attr__( 'Ordered List (OL/LI)', 'simple-tags' ),
+            'comma' => esc_attr__('WordPress Default', 'simple-tags'),
+            'table' => esc_attr__('Table List', 'simple-tags'), 
+            'border' => esc_attr__('Border Cloud', 'simple-tags'),
+            'parent/child' => esc_attr__('Parent / Child', 'simple-tags'),
         ];
-        
+
         return $days_options[$item['format']];
     }
 
@@ -376,7 +382,7 @@ class TagClouds_List extends WP_List_Table
     protected function column_shortcode($item)
     {
 
-        return '<input type="text" value=\'[taxopress_termsdisplay id="'.$item['ID'].'"]\' />';
+        return '<input readonly type="text" value=\'[taxopress_termsdisplay id="'.$item['ID'].'"]\' />';
     }
 
 

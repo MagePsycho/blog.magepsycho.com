@@ -4,17 +4,8 @@ add_action( 'admin_enqueue_scripts', function () {
 		'/ithemes-security/v1/site-types'                    => [
 			'route' => '/ithemes-security/v1/site-types',
 		],
-		'/ithemes-security/v1?context=help'                  => [
-			'route' => '/ithemes-security/v1',
-			'query' => [ 'context' => 'help' ],
-		],
 		'/ithemes-security/v1/user-matchables?_embed=1'      => [
 			'route' => '/ithemes-security/v1/user-matchables',
-			'embed' => true,
-		],
-		'/ithemes-security/v1/modules?context=edit&_embed=1' => [
-			'route' => '/ithemes-security/v1/modules',
-			'query' => [ 'context' => 'edit' ],
 			'embed' => true,
 		],
 		'/ithemes-security/v1/tools'                         => [
@@ -53,6 +44,7 @@ add_action( 'itsec-page-show', function () {
 	require_once ITSEC_Core::get_core_dir() . 'admin-pages/sidebar-widget.php';
 	require_once ITSEC_Core::get_core_dir() . 'deprecated/module-settings.php';
 	do_action( 'itsec-settings-page-init' );
+	do_action( 'stellarwp/telemetry/optin', 'solid-security' );
 
 	$server_type = ITSEC_Lib::get_server();
 	$onboard     = ITSEC_Modules::get_setting( 'global', 'onboard_complete' );

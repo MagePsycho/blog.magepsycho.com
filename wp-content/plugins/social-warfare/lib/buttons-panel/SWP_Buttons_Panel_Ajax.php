@@ -9,7 +9,6 @@
  * sharing buttons and will be activated when the "More" button is clicked on.
  *
  * @since  4.0.0 | 25 FEB 2020 | Created
- *
  */
 class SWP_Buttons_Panel_Ajax {
 
@@ -24,13 +23,12 @@ class SWP_Buttons_Panel_Ajax {
 	 * @since  4.0.0 | 25 FEB 2020 | Created
 	 * @param  void
 	 * @return void
-	 *
 	 */
 	public function __construct() {
 
 		// Register our method to fire when the hook is called.
-		add_action('wp_ajax_swp_buttons_panel', array($this, 'build_buttons_panels') );
-		add_action('wp_ajax_nopriv_swp_buttons_panel', array($this, 'build_buttons_panels') );
+		add_action( 'wp_ajax_swp_buttons_panel', array( $this, 'build_buttons_panels' ) );
+		add_action( 'wp_ajax_nopriv_swp_buttons_panel', array( $this, 'build_buttons_panels' ) );
 	}
 
 
@@ -45,12 +43,11 @@ class SWP_Buttons_Panel_Ajax {
 	 * @access public
 	 * @param  void
 	 * @return void
-	 *
 	 */
 	public function build_buttons_panels() {
 
 		// If the post_id is invalid, just bail out immediately.
-		if( empty( $_POST['post_id']) || false === is_numeric( $_POST['post_id'] ) ) {
+		if ( empty( $_POST['post_id'] ) || false === is_numeric( $_POST['post_id'] ) ) {
 			wp_die();
 			return;
 		}
@@ -73,7 +70,6 @@ class SWP_Buttons_Panel_Ajax {
 	 * @since  4.0.0 | 25 FEB 2020 | Created
 	 * @param  void
 	 * @return void
-	 *
 	 */
 	private function establish_available_buttons() {
 
@@ -82,26 +78,29 @@ class SWP_Buttons_Panel_Ajax {
 		$networks = $swp_social_networks;
 
 		// Sort the networks by their names.
-		usort($networks, function($a,$b) {
-			return strcmp($a->name, $b->name);
-		});
+		usort(
+			$networks,
+			function ( $a, $b ) {
+				return strcmp( $a->name, $b->name );
+			}
+		);
 
 		// Loope through and sort them into stacks of 4 networks.
 		$group = 0;
-		$i = 0;
-		foreach( $networks as $network ) {
+		$i     = 0;
+		foreach ( $networks as $network ) {
 
 			// Skip the "More" button since we're already inside it's options.
-			if( 'more' === $network->key ) {
+			if ( 'more' === $network->key ) {
 				continue;
 			}
 
-			$sorted_networks[$group][] = $network;
+			$sorted_networks[ $group ][] = $network;
 
 			// Iterate our counters.
-			$i++;
-			if( $i % 4 === 0 ) {
-				$group++;
+			++$i;
+			if ( 0 === $i % 4 ) {
+				++$group;
 			}
 		}
 
@@ -118,32 +117,31 @@ class SWP_Buttons_Panel_Ajax {
 	 * @since  4.0.0 | 25 FEB 2020 | Created
 	 * @param  void
 	 * @return void
-	 *
 	 */
 	private function generate_buttons_panel_html() {
 		$buttons = '';
 
 		// Loop through each network group containing 4 networks. Each group will
 		// be a row of buttons.
-		foreach( $this->network_groups as $network_group ) {
+		foreach ( $this->network_groups as $network_group ) {
 
 			// Loop through each network within this group and add it to our args list.
 			$networks = '';
-			foreach( $network_group as $network ) {
+			foreach ( $network_group as $network ) {
 				$networks .= ',' . $network->key;
 			}
 
 			// Set up the $args to be passed to the SWP_Buttons_Panel class.
 			$args = array(
-				'id' => $_POST['post_id'],
-				'buttons' => $networks,
-				'button_size' => 1.4,
-				'network_shares' => false
+				'id'             => sanitize_key( $_POST['post_id'] ),
+				'buttons'        => $networks,
+				'button_size'    => 1.4,
+				'network_shares' => false,
 			);
 
 			// Create the Buttons panel and render its HTML.
 			$buttons_panel = new SWP_Buttons_Panel( $args, true );
-			$buttons .= $buttons_panel->render_html();
+			$buttons      .= $buttons_panel->render_html();
 		}
 
 		// Store all of the buttons html into a local property.
@@ -159,26 +157,25 @@ class SWP_Buttons_Panel_Ajax {
 	 * @since  4.0.0 | 25 FEB 2020 | Created
 	 * @param  void
 	 * @return void Generated html is echoed directly to the screen.
-	 *
 	 */
 	private function generate_lightbox_container() {
-		$html = '<div class="swp-lightbox-wrapper swp-more-wrapper"><div class="swp-lightbox-inner">';
+		$html  = '<div class="swp-lightbox-wrapper swp-more-wrapper"><div class="swp-lightbox-inner">';
 		$html .= '<i class="sw swp_share_icon"></i>';
 		$html .= '<div class="swp-lightbox-close"></div>';
 		$html .= '<h5>Where would you like to share this?</h5>';
 		$html .= $this->buttons_html;
 
-		if( true === SWP_Utility::get_option('powered_by_toggle')) {
+		if ( true === SWP_Utility::get_option( 'powered_by_toggle' ) ) {
 
-			$affiliate_link = SWP_Utility::get_option('affiliate_link');
-			if( false === $affiliate_link || empty( $affiliate_link ) || '#' === $affiliate_link ) {
+			$affiliate_link = SWP_Utility::get_option( 'affiliate_link' );
+			if ( false === $affiliate_link || empty( $affiliate_link ) || '#' === $affiliate_link ) {
 				$affiliate_link = 'https://warfareplugins.com';
 			}
 
-			$html .= '<div class="swp_powered_by"><a href="'. $affiliate_link .'" target="_blank"><span>Powered by</span> <img src="/wp-content/plugins/social-warfare/assets/images/admin-options-page/social-warfare-pro-light.png"></a></div>';
+			$html .= '<div class="swp_powered_by"><a href="' . $affiliate_link . '" target="_blank"><span>Powered by</span> <img src="/wp-content/plugins/social-warfare/assets/images/admin-options-page/social-warfare-pro-light.png"></a></div>';
 		}
 
 		$html .= '</div></div>';
-		echo $html;
+		echo wp_kses( $html, SWP_Section_HTML::get_allowable_html() );
 	}
 }

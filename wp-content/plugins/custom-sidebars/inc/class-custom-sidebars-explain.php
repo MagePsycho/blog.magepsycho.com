@@ -152,7 +152,7 @@ class CustomSidebarsExplain extends CustomSidebars {
 			<h3>Sidebar Infos</h3>
 			<ul>
 				<?php foreach ( $this->infos as $info ) : ?>
-					<li><?php echo $info; ?></li>
+					<li><?php CustomSidebars::wp_kses_wf($info); ?></li>
 				<?php endforeach; ?>
 			</ul>
 		</div>
@@ -166,9 +166,9 @@ class CustomSidebarsExplain extends CustomSidebars {
 	 * @return [type] [description]
 	 */
 	static public function get_color() {
-		$r = rand( 40, 140 );
-		$g = rand( 40, 140 );
-		$b = rand( 40, 140 );
+		$r = wp_rand( 40, 140 );
+		$g = wp_rand( 40, 140 );
+		$b = wp_rand( 40, 140 );
 		return '#' . dechex( $r ) . dechex( $g ) . dechex( $b );
 	}
 

@@ -62,9 +62,6 @@ function monsterinsights_admin_menu()
 		add_submenu_page( $parent_slug, __( 'General Reports:', 'google-analytics-for-wordpress' ), __( 'Reports', 'google-analytics-for-wordpress' ), 'monsterinsights_view_dashboard', 'monsterinsights_reports', 'monsterinsights_reports_page' );
 	}
 
-	// then settings page
-	add_submenu_page( $parent_slug, __( 'MonsterInsights', 'google-analytics-for-wordpress' ), __( 'Settings', 'google-analytics-for-wordpress' ), 'monsterinsights_save_settings', 'monsterinsights_settings', 'monsterinsights_settings_page' );
-
 	/**
 	 * Output the Custom Dashboard app mount node.
 	 *
@@ -72,8 +69,26 @@ function monsterinsights_admin_menu()
 	 */
 	function monsterinsights_custom_dashboard_page() {
 		do_action( 'monsterinsights_head' );
-		echo '<div id="monsterinsights-custom-dashboard-app" class="mi-custom-dashboard-app">Loading</div>';
+		// Hide WordPress admin notices on this page - Vue app handles its own notifications
+		echo '<style>.monsterinsights_page_monsterinsights_custom_dashboard .notice:not(.monsterinsights-notice),.monsterinsights_page_monsterinsights_custom_dashboard .error:not(.monsterinsights-notice),.monsterinsights_page_monsterinsights_custom_dashboard .updated:not(.monsterinsights-notice){display:none !important;}</style>';
+		echo '<div id="monsterinsights-custom-dashboard-app" class="mi-custom-dashboard-app">';
+		echo '<div class="mi-app-loading"><span class="dashicons dashicons-update mi-spin"></span></div>';
+		echo '<style>.mi-app-loading{display:flex;align-items:center;justify-content:center;min-height:400px;}.mi-spin{animation:mi-spin 1s linear infinite;font-size:40px;width:40px;height:40px;color:#338eef;}@keyframes mi-spin{to{transform:rotate(360deg);}}</style>';
+		echo '</div>';
 	}
+
+// 	// Add Dashboard page (Vue 3 app)
+// 	add_submenu_page(
+// 		$parent_slug,
+// 		__( 'Dashboard:', 'google-analytics-for-wordpress' ),
+// 		__( 'Dashboard', 'google-analytics-for-wordpress' ) . $new_indicator,
+// 		'monsterinsights_view_dashboard',
+// 		'monsterinsights_custom_dashboard',
+// 		'monsterinsights_custom_dashboard_page'
+// 	);
+
+	// then settings page
+	add_submenu_page( $parent_slug, __( 'MonsterInsights', 'google-analytics-for-wordpress' ), __( 'Settings', 'google-analytics-for-wordpress' ), 'monsterinsights_save_settings', 'monsterinsights_settings', 'monsterinsights_settings_page' );
 
 	// Add dashboard submenu.
 	add_submenu_page( 'index.php', __( 'General Reports:', 'google-analytics-for-wordpress' ), __( 'Insights', 'google-analytics-for-wordpress' ), 'monsterinsights_view_dashboard', 'admin.php?page=monsterinsights_reports' );

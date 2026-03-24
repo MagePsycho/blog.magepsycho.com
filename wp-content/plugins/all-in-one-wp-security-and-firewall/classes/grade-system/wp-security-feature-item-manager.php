@@ -1,374 +1,736 @@
 <?php
+if (!defined('ABSPATH')) {
+	exit; // Exit if accessed directly
+}
 
 class AIOWPSecurity_Feature_Item_Manager {
 
-	public $feature_items;
-	
-	public $total_points = 0;
+	private $feature_list = array();
 
-	public $total_achievable_points = 0;
-	
-	public $feature_point_1 = "5";
+	public $feature_items = array();
 
-	public $feature_point_2 = "10";
+	private $total_points = 0;
 
-	public $feature_point_3 = "15";
+	private $total_achievable_points = 0;
 
-	public $feature_point_4 = "20";
+	private $feature_point_1 = "5";
 
-	public $sec_level_basic = "1";
+	private $feature_point_2 = "10";
 
-	public $sec_level_inter = "2";
+	private $feature_point_3 = "15";
 
-	public $sec_level_advanced = "3";
+	private $feature_point_4 = "20";
 
-	public $feature_active = "active";
+	private $sec_level_basic = "1";
 
-	public $feature_inactive = "inactive";
+	private $sec_level_inter = "2";
 
-	public $feature_partial = "partial";
-		
+	private $sec_level_advanced = "3";
+
+	private $feature_active = "active";
+
+	private $feature_inactive = "inactive";
+
+	private $feature_partial = "partial";
+
+	/**
+	 * Constructor sets up the feature item manager
+	 */
 	public function __construct() {
-		
+		$this->setup_feature_list();
+		$this->initialize_features();
 	}
-	
-	public function initialize_features() {
-		$this->feature_items = array();
-		//Settings Menu Features
-		//WP Generator Meta
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("wp-generator-meta-tag", __("Remove WP Generator Meta Tag", "all-in-one-wp-security-and-firewall"), $this->feature_point_1, $this->sec_level_basic);
-		
-		//Prevent Image Hotlinks
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("prevent-hotlinking", __("Prevent Image Hotlinking", "all-in-one-wp-security-and-firewall"), $this->feature_point_2, $this->sec_level_basic);
 
-		//User Accounts Menu Features
-		//Change Admin Username
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("user-accounts-change-admin-user", __("Change Admin Username", "all-in-one-wp-security-and-firewall"), $this->feature_point_3, $this->sec_level_basic);
-		//Change Display Name
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("user-accounts-display-name", __("Change Display Name", "all-in-one-wp-security-and-firewall"), $this->feature_point_1, $this->sec_level_basic);
-		
-		//User Login Menu Features
-		//Locking Lockdown
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("user-login-login-lockdown", __("Login Lockdown", "all-in-one-wp-security-and-firewall"), $this->feature_point_4, $this->sec_level_basic);
-		//Login Captcha
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("user-login-captcha", __("Login Captcha", "all-in-one-wp-security-and-firewall"), $this->feature_point_4, $this->sec_level_basic);
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("custom-login-captcha", __("Custom Login Captcha", "all-in-one-wp-security-and-firewall"), $this->feature_point_4, $this->sec_level_basic);
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("woo-login-captcha", __("Woo Login Captcha", "all-in-one-wp-security-and-firewall"), $this->feature_point_2, $this->sec_level_basic);
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("woo-lostpassword-captcha", __("Woo Lost Password Captcha", "all-in-one-wp-security-and-firewall"), $this->feature_point_2, $this->sec_level_basic);
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("woo-register-captcha", __("Woo Register Captcha", "all-in-one-wp-security-and-firewall"), $this->feature_point_2, $this->sec_level_basic);
-		//Lost Password Captcha
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("lost-password-captcha", __("Lost Password Captcha", "all-in-one-wp-security-and-firewall"), $this->feature_point_2, $this->sec_level_basic);
-		//Login whitelisting
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("whitelist-manager-ip-login-whitelisting", __("Login IP Whitelisting", "all-in-one-wp-security-and-firewall"), $this->feature_point_3, $this->sec_level_inter);
-		//Force Logout
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("user-login-force-logout", __("Force Logout", "all-in-one-wp-security-and-firewall"), $this->feature_point_1, $this->sec_level_basic);
+	/**
+	 * This function sets up the feature list
+	 *
+	 * @return void
+	 */
+	private function setup_feature_list() {
+		$feature_list = array(
+			// Settings menu features
+			'wp-generator-meta-tag' => array(
+				'name' => __('Remove WP generator meta tag', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_1,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_remove_wp_generator_meta_info'
+				)
+			),
+			// User Accounts menu features
+			'user-accounts-change-admin-user' => array(
+				'name' => __('Change admin username', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_3,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					''
+				),
+				'callback' => array($this, 'check_user_accounts_change_admin_user_feature')
+			),
+			'user-accounts-display-name' => array(
+				'name' => __('Change display name', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_1,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					''
+				),
+				'callback' => array($this, 'check_user_accounts_display_name_feature')
+			),
+			// User Login menu features
+			'user-login-login-lockdown' => array(
+				'name' => __('Login lockout', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_4,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_login_lockdown'
+				)
+			),
+			'user-login-force-logout' => array(
+				'name' => __('Force logout', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_1,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_forced_logout'
+				)
+			),
+			'hibp' => array(
+				'name' => __('HIBP', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_inter,
+				'options' => array(
+					'aiowps_hibp_user_profile_update',
+					'aiowps_http_password_reset',
+				)
+			),
+			'disable-application-password' => array(
+				'name' => __('Disable application password', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_inter,
+				'options' => array(
+					'aiowps_disable_application_password'
+				)
+			),
+			'user-login-lockout-ip-whitelisting' => array(
+				'name' => __('Login Lockout IP whitelisting', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_3,
+				'level' => $this->sec_level_inter,
+				'options' => array(
+					'aiowps_lockdown_enable_whitelisting'
+				)
+			),
+			// User Registration menu features
+			'manually-approve-registrations' => array(
+				'name' => __('Registration approval', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_4,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_manual_registration_approval'
+				)
+			),
+			'user-registration-captcha' => array(
+				'name' => __('Registration CAPTCHA', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_4,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_registration_page_captcha'
+				)
+			),
+			'registration-honeypot' => array(
+				'name' => __('Enable registration honeypot', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_inter,
+				'options' => array(
+					'aiowps_enable_registration_honeypot'
+				)
+			),
+			'http-authentication-admin-frontend' => array(
+				'name' => __('HTTP authentication for admin and frontend', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_http_authentication_admin',
+					'aiowps_http_authentication_frontend',
+				)
+			),
+			// Database Security menu features
+			'db-security-db-prefix' => array(
+				'name' => __('Database prefix', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_inter,
+				'options' => array(
+					''
+				),
+				'callback' => array($this, 'check_db_security_db_prefix_feature')
+			),
+			// Filesystem Security menu features
+			'filesystem-file-permissions' => array(
+				'name' => __('File permissions', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_4,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					''
+				),
+				'callback' => array($this, 'check_filesystem_permissions_feature')
+			),
+			'filesystem-file-editing' => array(
+				'name' => __('File editing', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_disable_file_editing'
+				)
+			),
+			'auto-delete-wp-files' => array(
+				'name' => __('WordPress files access', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_auto_delete_default_wp_files'
+				)
+			),
+			// Blacklist Manager menu features
+			'blacklist-manager-ip-user-agent-blacklisting' => array(
+				'name' => __('IP and user agent blacklisting', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_3,
+				'level' => $this->sec_level_advanced,
+				'options' => array(
+					'aiowps_enable_blacklisting'
+				)
+			),
+			// Firewall menu features
+			'firewall-basic-rules' => array(
+				'name' => __('Enable basic firewall', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_3,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_basic_firewall'
+				),
+				'feature_condition_callback' => array('AIOWPSecurity_Utility', 'allow_to_write_to_htaccess')
+			),
+			'firewall-pingback-rules' => array(
+				'name' => __('Enable pingback vulnerability protection', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_3,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_pingback_firewall'
+				)
+			),
+			'firewall-block-debug-file-access' => array(
+				'name' => __('Block access to debug log file', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_inter,
+				'options' => array(
+					'aiowps_block_debug_log_file_access'
+				),
+				'feature_condition_callback' => array('AIOWPSecurity_Utility', 'allow_to_write_to_htaccess')
+			),
+			'firewall-disable-index-views' => array(
+				'name' => __('Disable index views', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_1,
+				'level' => $this->sec_level_inter,
+				'options' => array(
+					'aiowps_disable_index_views'
+				),
+				'feature_condition_callback' => array('AIOWPSecurity_Utility', 'allow_to_write_to_htaccess')
+			),
+			'firewall-disable-trace-track' => array(
+				'name' => __('Disable trace and track', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_advanced,
+				'options' => array(
+					'aiowps_disable_trace_and_track'
+				),
+				'feature_condition_callback' => array('AIOWPSecurity_Utility', 'allow_to_write_to_htaccess')
+			),
+			'firewall-forbid-proxy-comments' => array(
+				'name' => __('Forbid proxy comments', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_advanced,
+				'options' => array(
+					'aiowps_forbid_proxy_comments'
+				)
+			),
+			'firewall-deny-bad-queries' => array(
+				'name' => __('Deny bad queries', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_3,
+				'level' => $this->sec_level_advanced,
+				'options' => array(
+					'aiowps_deny_bad_query_strings'
+				)
+			),
+			'firewall-advanced-character-string-filter' => array(
+				'name' => __('Advanced character string filter', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_3,
+				'level' => $this->sec_level_advanced,
+				'options' => array(
+					'aiowps_advanced_char_string_filter'
+				)
+			),
+			'firewall-enable-6g' => array(
+				'name' => __('6G firewall', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_4,
+				'level' => $this->sec_level_advanced,
+				'options' => array(
+					'aiowps_enable_6g_firewall',
+				)
+			),
+			'firewall-block-fake-googlebots' => array(
+				'name' => __('Block fake Googlebots', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_1,
+				'level' => $this->sec_level_advanced,
+				'options' => array(
+					'aiowps_block_fake_googlebots'
+				)
+			),
+			'prevent-hotlinking' => array(
+				'name' => __('Prevent image hotlinking', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_prevent_hotlinking'
+				)
+			),
+			'firewall-enable-404-blocking' => array(
+				'name' => __('Enable IP blocking for 404 detection', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_1,
+				'level' => $this->sec_level_inter,
+				'options' => array(
+					'aiowps_enable_404_IP_lockout'
+				)
+			),
+			'firewall-disable-rss-and-atom' => array(
+				'name' => __('Disable RSS and ATOM feeds', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_disable_rss_and_atom_feeds'
+				)
+			),
+			'upgrade-unsafe-http-calls' => array(
+				'name' => __('Upgrade unsafe HTTP calls', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_inter,
+				'options' => array(
+					'aiowps_upgrade_unsafe_http_calls'
+				)
+			),
+			// Brute Force menu features
+			'bf-rename-login-page' => array(
+				'name' => __('Enable rename login page', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_inter,
+				'options' => array(
+					'aiowps_enable_rename_login_page'
+				)
+			),
+			'firewall-enable-brute-force-attack-prevention' => array(
+				'name' => __('Enable brute force attack prevention', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_4,
+				'level' => $this->sec_level_advanced,
+				'options' => array(
+					'aiowps_enable_brute_force_attack_prevention'
+				)
+			),
+			'user-login-captcha' => array(
+				'name' => __('Login CAPTCHA', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_4,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_login_captcha'
+				)
+			),
+			'lost-password-captcha' => array(
+				'name' => __('Lost password CAPTCHA', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_lost_password_captcha'
+				)
+			),
+			'custom-login-captcha' => array(
+				'name' => __('Custom login CAPTCHA', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_4,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_custom_login_captcha'
+				)
+			),
+			'password_protected-captcha' => array(
+				'name' => __('Password-protected CAPTCHA', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_1,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_password_protected_captcha'
+				)
+			),
+			'whitelist-manager-ip-login-whitelisting' => array(
+				'name' => __('Login IP whitelisting', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_3,
+				'level' => $this->sec_level_inter,
+				'options' => array(
+					'aiowps_enable_whitelisting'
+				)
+			),
+			'login-honeypot' => array(
+				'name' => __('Enable login honeypot', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_inter,
+				'options' => array(
+					'aiowps_enable_login_honeypot'
+				)
+			),
+			// Spam Prevention menu features
+			'comment-form-captcha' => array(
+				'name' => __('Comment CAPTCHA', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_4,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_comment_captcha'
+				)
+			),
+			'detect-spambots' => array(
+				'name' => __('Detect spambots', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_spambot_detecting'
+				)
+			),
+			'auto-block-spam-ips' => array(
+				'name' => __('Auto block spam ips', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_autoblock_spam_ip'
+				)
+			),
+			// Scanner menu features
+			'scan-file-change-detection' => array(
+				'name' => __('File change detection', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_4,
+				'level' => $this->sec_level_inter,
+				'options' => array(
+					'aiowps_enable_automated_fcd_scan'
+				)
+			),
+			// Miscellaneous menu features
+			'enable-copy-protection' => array(
+				'name' => __('Enable Copy Protection', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_1,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_copy_protection'
+				)
+			),
+			'enable-frame-protection' => array(
+				'name' => __('Enable iFrame protection', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_1,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_prevent_site_display_inside_frame'
+				)
+			),
+			'disable-users-enumeration' => array(
+				'name' => __('Disable users enumeration', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_1,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_prevent_users_enumeration'
+				)
+			),
+			'disallow-unauthorised-requests' => array(
+				'name' => __('Disallow unauthorized REST requests', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_1,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_disallow_unauthorized_rest_requests'
+				)
+			),
+			'enable-salt-postfix' => array(
+				'name' => __('Enable salt postfix', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_3,
+				'level' => $this->sec_level_advanced,
+				'options' => array(
+					'aiowps_enable_salt_postfix'
+				)
+			),
+			// conditional features
+			'bp-register-captcha' => array(
+				'name' => __('BuddyPress registration CAPTCHA', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_1,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_bp_register_captcha'
+				),
+				'feature_condition_callback' => array('AIOWPSecurity_Utility', 'is_buddypress_plugin_active'),
+			),
+			'bbp-new-topic-captcha' => array(
+				'name' => __('bbPress new topic CAPTCHA', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_1,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_bbp_new_topic_captcha'
+				),
+				'feature_condition_callback' => array('AIOWPSecurity_Utility', 'is_bbpress_plugin_active'),
+			),
+			'woo-login-captcha' => array(
+				'name' => __('Woo login CAPTCHA', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_woo_login_captcha'
+				),
+				'feature_condition_callback' => array('AIOWPSecurity_Utility', 'is_woocommerce_plugin_active'),
+			),
+			'woo-lostpassword-captcha' => array(
+				'name' => __('Woo lost password CAPTCHA', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_woo_lostpassword_captcha'
+				),
+				'feature_condition_callback' => array('AIOWPSecurity_Utility', 'is_woocommerce_plugin_active'),
+			),
+			'woo-register-captcha' => array(
+				'name' => __('Woo register CAPTCHA', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_woo_register_captcha'
+				),
+				'feature_condition_callback' => array('AIOWPSecurity_Utility', 'is_woocommerce_plugin_active'),
+			),
+			'woo-checkout-captcha' => array(
+				'name' => __('Woo Checkout CAPTCHA', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_woo_checkout_captcha'
+				),
+				'feature_condition_callback' => array('AIOWPSecurity_Utility', 'is_woocommerce_plugin_active'),
+			),
+			// Ban POST requests with blank user-agent and referer
+			'firewall-ban-post-blank-headers' => array(
+				'name' => __('Ban POST requests that have blank user-agent and referer headers', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_2,
+				'level' => $this->sec_level_inter,
+				'options' => array(
+					'aiowps_ban_post_blank_headers'
+				)
+			),
+			'contact-form-7-captcha' => array(
+				/* translators: %s: Plugin name */
+				'name' => sprintf(__('%s CAPTCHA', 'all-in-one-wp-security-and-firewall'), 'Contact Form 7'),
+				'points' => $this->feature_point_1,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enable_contact_form_7_captcha'
+				),
+				'feature_condition_callback' => array('AIOWPSecurity_Utility', 'is_contact_form_7_plugin_active'),
+			),
+			'enforce-strong-password' => array(
+				'name' => __('Enforce use of strong passwords by users', 'all-in-one-wp-security-and-firewall'),
+				'points' => $this->feature_point_1,
+				'level' => $this->sec_level_basic,
+				'options' => array(
+					'aiowps_enforce_strong_password'
+				),
+			)
+		);
 
-		//User Registration
-		//Manually approve registrations
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("manually-approve-registrations", __("Registration Approval", "all-in-one-wp-security-and-firewall"), $this->feature_point_4, $this->sec_level_basic);
-		//Registration Captcha
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("user-registration-captcha", __("Registration Captcha", "all-in-one-wp-security-and-firewall"), $this->feature_point_4, $this->sec_level_basic);
-		//Registration Honeypot
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("registration-honeypot", __("Enable Registration Honeypot", "all-in-one-wp-security-and-firewall"), $this->feature_point_2, $this->sec_level_inter);
-		
-		//Database Security Menu Features
-		//DB Prefix
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("db-security-db-prefix", __("DB Prefix", "all-in-one-wp-security-and-firewall"), $this->feature_point_2, $this->sec_level_inter);
-		//DB Backup
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("db-security-db-backup", __("DB Backup", "all-in-one-wp-security-and-firewall"), $this->feature_point_4, $this->sec_level_basic);
-		
-		//File System Security Menu Features
-		//File Permissions
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("filesystem-file-permissions", __("File Permissions", "all-in-one-wp-security-and-firewall"), $this->feature_point_4, $this->sec_level_basic);
-		//PHP File Editing
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("filesystem-file-editing", __("File Editing", "all-in-one-wp-security-and-firewall"), $this->feature_point_2, $this->sec_level_basic);
-		//Prevent Access WP Install Files
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("block-wp-files-access", __("WordPress Files Access", "all-in-one-wp-security-and-firewall"), $this->feature_point_2, $this->sec_level_basic);
-		
-		//Blacklist Manager Menu Features
-		//IP and user agent blacklisting
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("blacklist-manager-ip-user-agent-blacklisting", __("IP and User Agent Blacklisting", "all-in-one-wp-security-and-firewall"), $this->feature_point_3, $this->sec_level_advanced);
-		
-		//Firewall Menu Features
-		//Basic firewall
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("firewall-basic-rules", __("Enable Basic Firewall", "all-in-one-wp-security-and-firewall"), $this->feature_point_3, $this->sec_level_basic);
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("firewall-pingback-rules", __("Enable Pingback Vulnerability Protection", "all-in-one-wp-security-and-firewall"), $this->feature_point_3, $this->sec_level_basic);
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("firewall-block-debug-file-access", __("Block Accesss to Debug Log File", "all-in-one-wp-security-and-firewall"), $this->feature_point_2, $this->sec_level_inter);
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("firewall-enable-404-blocking", __("Enable IP blocking for 404 detection", "all-in-one-wp-security-and-firewall"), $this->feature_point_1, $this->sec_level_inter);
-
-		//Brute Force Menu Features
-		//Rename Login page
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("bf-rename-login-page", __("Enable Rename Login Page", "all-in-one-wp-security-and-firewall"), $this->feature_point_2, $this->sec_level_inter);
-		//Login Honeypot
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("login-honeypot", __("Enable Login Honeypot", "all-in-one-wp-security-and-firewall"), $this->feature_point_2, $this->sec_level_inter);
-		
-		//Additional and Advanced firewall
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("firewall-enable-brute-force-attack-prevention", __("Enable Brute Force Attack Prevention", "all-in-one-wp-security-and-firewall"), $this->feature_point_4, $this->sec_level_advanced);
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("firewall-disable-index-views", __("Disable Index Views", "all-in-one-wp-security-and-firewall"), $this->feature_point_1, $this->sec_level_inter);
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("firewall-disable-trace-track", __("Disable Trace and Track", "all-in-one-wp-security-and-firewall"), $this->feature_point_2, $this->sec_level_advanced);
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("firewall-forbid-proxy-comments", __("Forbid Proxy Comments", "all-in-one-wp-security-and-firewall"), $this->feature_point_2, $this->sec_level_advanced);
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("firewall-deny-bad-queries", __("Deny Bad Queries", "all-in-one-wp-security-and-firewall"), $this->feature_point_3, $this->sec_level_advanced);
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("firewall-advanced-character-string-filter", __("Advanced Character String Filter", "all-in-one-wp-security-and-firewall"), $this->feature_point_3, $this->sec_level_advanced);
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("firewall-enable-5g-6g-blacklist", __("5G/6G Blacklist", "all-in-one-wp-security-and-firewall"), $this->feature_point_4, $this->sec_level_advanced);
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("firewall-block-fake-googlebots", __("Block Fake Googlebots", "all-in-one-wp-security-and-firewall"), $this->feature_point_1, $this->sec_level_advanced);
-		//SPAM Prevention
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("block-spambots", __("Block Spambots", "all-in-one-wp-security-and-firewall"), $this->feature_point_2, $this->sec_level_basic);
-		//Comment Captcha
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("comment-form-captcha", __("Comment Captcha", "all-in-one-wp-security-and-firewall"), $this->feature_point_4, $this->sec_level_basic);
-		//BuddyPress Registration Captcha
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("bp-register-captcha", __("BuddyPress Registration Captcha", "all-in-one-wp-security-and-firewall"), $this->feature_point_1, $this->sec_level_basic);
-		//BBPress new topic Captcha
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("bbp-new-topic-captcha", __("BBPress New Topic Captcha", "all-in-one-wp-security-and-firewall"), $this->feature_point_1, $this->sec_level_basic);
-		
-		//Filescan
-		//File change detection
-		$this->feature_items[] = new AIOWPSecurity_Feature_Item("scan-file-change-detection", __("File Change Detection", "all-in-one-wp-security-and-firewall"), $this->feature_point_4, $this->sec_level_inter);
-
+		$feature_list = apply_filters('aiowpsecurity_feature_list', $feature_list);
+		$this->feature_list = array_filter($feature_list, array($this, 'should_add_item'));
 	}
-	
+
+	/**
+	 * This function will create a feature item object for each feature in the feature list
+	 *
+	 * @return void
+	 */
+	private function initialize_features() {
+		foreach ($this->feature_list as $id => $data) {
+			$callback = isset($data['callback']) ? $data['callback'] : array($this, 'is_feature_enabled');
+			$this->feature_items[$id] = new AIOWPSecurity_Feature_Item($id, $data['name'], $data['points'], $data['level'], $data['options'], $callback);
+		}
+	}
+
+	/**
+	 * This function will return the feature item for the passed in ID
+	 *
+	 * @param string $feature_id - the id of the feature item we want to return
+	 *
+	 * @return boolean|AIOWPSecurity_Feature_Item - returns a feature item or false on coding error
+	 */
 	public function get_feature_item_by_id($feature_id) {
-		foreach ($this->feature_items as $item) {
-			if ($item->feature_id == $feature_id) {
-				return $item;
-			}
+		if (isset($this->feature_items[$feature_id])) return $this->feature_items[$feature_id];
+		error_log("AIOS Feature Manager - Feature ID not found (coding error): $feature_id");
+		return false;
+	}
+
+	/**
+	 * Call the callback function associated with the feature item.
+	 *
+	 * @param mixed $feature_item The feature item object.
+	 */
+	private function call_feature_callback($feature_item) {
+		call_user_func($feature_item->callback, $feature_item);
+	}
+
+	/**
+	 * This function will output the feature details badge HTML
+	 *
+	 * @param string $feature_id             - the id of the feature we want to get the badge for
+	 * @param bool   $return_instead_of_echo - whether to return the HTML or echo it
+	 *
+	 * @return string|void
+	 */
+	public function output_feature_details_badge($feature_id, $return_instead_of_echo = false) {
+		// Retrieve the feature item by ID
+		$feature_item = $this->get_feature_item_by_id($feature_id);
+
+		if (!$feature_item) return;
+
+		$this->call_feature_callback($feature_item);
+
+		// Prepare HTML for the feature badge
+		$max_security_points = $feature_item->item_points;
+		$current_security_points = $feature_item->is_active() ? $max_security_points : 0;
+		$security_level = $feature_item->get_security_level_string();
+		$protection_level = (0 == $current_security_points) ? 'none' : 'full';
+		$status_icon = (0 == $current_security_points) ? 'dashicons-unlock' : 'dashicons-lock';
+	
+		$badge_html = '<div class="aiowps_feature_details_badge">';
+		$badge_html .= '<span class="aiowps_feature_details_badge_difficulty aiowps_feature_protection_'.$protection_level.'" title="'.__('Feature difficulty', 'all-in-one-wp-security-and-firewall').'">';
+		$badge_html .= '<span class="dashicons '.$status_icon.'"></span>'.$security_level.'</span>';
+		$badge_html .= '<span class="aiowps_feature_details_badge_points" title="'.__('Security points', 'all-in-one-wp-security-and-firewall').'">';
+		$badge_html .= $current_security_points.'/'.$max_security_points.'</span>';
+		$badge_html .= '</div>';
+	
+		if ($return_instead_of_echo) {
+			return $badge_html;
+		} else {
+			echo $badge_html;
 		}
-		return "";
+	}
+
+	/**
+	 * This function will calculate the total points for the AJAX save function
+	 *
+	 * @return void
+	 */
+	public function calculate_total_feature_points() {
+		$this->calculate_total_points();
 	}
 	
-	public function output_feature_details_badge($feature_id) {
-		$cau_feature_item = $this->get_feature_item_by_id($feature_id);
-		$cau_security_level = $cau_feature_item->security_level;
-		$cau_security_points = $cau_feature_item->item_points;
-		$cau_your_points = 0;
-		if ($cau_feature_item->feature_status == $this->feature_active) {
-			$cau_your_points = $cau_security_points;
-		}
-		$level_str = $cau_feature_item->get_security_level_string($cau_security_level);
-		?>
-		<div class="aiowps_feature_details_badge">
-				<div class="aiowps_feature_details_badge_difficulty" title="Feature Difficulty">
-					<span class="aiowps_feature_details_badge_difficulty_text"><?php _e($level_str, 'all-in-one-wp-security-and-firewall'); ?></span>
-				</div>
-				<div class="aiowps_feature_details_badge_points" title="Security Points">
-					<span class="aiowps_feature_details_badge_points_text"><?php echo $cau_your_points .'/'. $cau_security_points; ?></span>
-				</div>
-		</div>
-		<?php
-	}
-	
+	/**
+	 * This function will setup the feature status and calculate the total points
+	 *
+	 * @return void
+	 */
 	public function check_feature_status_and_recalculate_points() {
 		$this->check_and_set_feature_status();
 		$this->calculate_total_points();
 	}
-	
-	public function check_and_set_feature_status() {
+
+	/**
+	 * This function will calculate the total points for the site
+	 *
+	 * @return void
+	 */
+	private function calculate_total_points() {
 		foreach ($this->feature_items as $item) {
-			if ("wp-generator-meta-tag" == $item->feature_id) {
-				$this->check_remove_wp_generator_meta_feature($item);
-			}
-
-			if ("prevent-hotlinking" == $item->feature_id) {
-				$this->check_prevent_hotlinking_feature($item);
-			}
-
-			if ("user-accounts-change-admin-user" == $item->feature_id) {
-				$this->check_user_accounts_change_admin_user_feature($item);
-			}
-
-			if ("user-accounts-display-name" == $item->feature_id) {
-				$this->check_user_accounts_display_name_feature($item);
-			}
-
-			if ("db-security-db-prefix" == $item->feature_id) {
-				$this->check_db_security_db_prefix_feature($item);
-			}
-
-			if ("db-security-db-backup" == $item->feature_id) {
-				$this->check_db_security_db_backup_feature($item);
-			}
-
-			if ("user-login-login-lockdown" == $item->feature_id) {
-				$this->check_login_lockdown_feature($item);
-			}
-
-			if ("user-login-captcha" == $item->feature_id) {
-				$this->check_login_captcha_feature($item);
-			}
-
-			if ("custom-login-captcha" == $item->feature_id) {
-				$this->check_custom_login_captcha_feature($item);
-			}
-
-			if ("woo-login-captcha" == $item->feature_id) {
-				$this->check_woo_login_captcha_feature($item);
-			}
-
-			if ("woo-lostpassword-captcha" == $item->feature_id) {
-				$this->check_woo_lostpassword_captcha_feature($item);
-			}
-
-			if ("woo-register-captcha" == $item->feature_id) {
-				$this->check_woo_register_captcha_feature($item);
-			}
-
-			if ("lost-password-captcha" == $item->feature_id) {
-				$this->check_lost_password_captcha_feature($item);
-			}
-
-			if ("comment-form-captcha" == $item->feature_id) {
-				$this->check_comment_captcha_feature($item);
-			}
-
-			if ("bp-register-captcha" == $item->feature_id) {
-				$this->check_bp_register_captcha_feature($item);
-			}
-
-			if ("bbp-new-topic-captcha" == $item->feature_id) {
-				$this->check_bbp_new_topic_captcha_feature($item);
-			}
-
-			if ("whitelist-manager-ip-login-whitelisting" == $item->feature_id) {
-				$this->check_login_whitelist_feature($item);
-			}
-
-			if ("user-login-force-logout" == $item->feature_id) {
-				$this->check_force_logout_feature($item);
-			}
-			
-			if ("manually-approve-registrations" == $item->feature_id) {
-				$this->check_registration_approval_feature($item);
-			}
-
-			if ("user-registration-captcha" == $item->feature_id) {
-				$this->check_registration_captcha_feature($item);
-			}
-
-			if ("registration-honeypot" == $item->feature_id) {
-				$this->check_enable_registration_honeypot_feature($item);
-			}
-			
-			if ("filesystem-file-permissions" == $item->feature_id) {
-				$this->check_filesystem_permissions_feature($item);
-			}
-
-			if ("filesystem-file-editing" == $item->feature_id) {
-				$this->check_filesystem_file_editing_feature($item);
-			}
-
-			if ("block-wp-files-access" == $item->feature_id) {
-				$this->check_block_wp_files_access_feature($item);
-			}
-
-			if ("blacklist-manager-ip-user-agent-blacklisting" == $item->feature_id) {
-				$this->check_enable_ip_useragent_blacklist_feature($item);
-			}
-			
-			if ("firewall-basic-rules" == $item->feature_id) {
-				$this->check_enable_basic_firewall_feature($item);
-			}
-			
-			if ("firewall-pingback-rules" == $item->feature_id) {
-				$this->check_enable_pingback_firewall_feature($item);
-			}
-
-			if ("firewall-block-debug-file-access" == $item->feature_id) {
-				$this->check_debug_file_access_block_firewall_feature($item);
-			}
-			
-			if ("firewall-enable-404-blocking" == $item->feature_id) {
-				$this->check_enable_404_blocking_feature($item);
-			}
-			
-			if ("firewall-enable-brute-force-attack-prevention" == $item->feature_id) {
-				$this->check_enable_bfap_firewall_feature($item);
-			}
-			if ("firewall-disable-index-views" == $item->feature_id) {
-				$this->check_disable_index_views_firewall_feature($item);
-			}
-			if ("firewall-disable-trace-track" == $item->feature_id) {
-				$this->check_disable_trace_track_firewall_feature($item);
-			}
-			if ("firewall-forbid-proxy-comments" == $item->feature_id) {
-				$this->check_forbid_proxy_comments_firewall_feature($item);
-			}
-			if ("firewall-deny-bad-queries" == $item->feature_id) {
-				$this->check_deny_bad_queries_firewall_feature($item);
-			}
-			if ("firewall-advanced-character-string-filter" == $item->feature_id) {
-				$this->check_advanced_char_string_filter_firewall_feature($item);
-			}
-			if ("firewall-enable-5g-6g-blacklist" == $item->feature_id) {
-				$this->check_enable_5G_6G_blacklist_firewall_feature($item);
-			}
-			if ("firewall-block-fake-googlebots" == $item->feature_id) {
-				$this->check_block_fake_googlebots_firewall_feature($item);
-			}
-			
-			if ("bf-rename-login-page" == $item->feature_id) {
-				$this->check_enable_rename_login_page_feature($item);
-			}
-			
-			if ("login-honeypot" == $item->feature_id) {
-				$this->check_enable_login_honeypot_feature($item);
-			}
-
-			if ("block-spambots" == $item->feature_id) {
-				$this->check_enable_block_spambots_feature($item);
-			}
-			
-			if ("scan-file-change-detection" == $item->feature_id) {
-				$this->check_enable_fcd_scan_feature($item);
-			}
-			
+			if ($item->is_active()) $this->total_points = $this->total_points + intval($item->item_points);
 		}
 	}
-	
-	public function calculate_total_points() {
-		foreach ($this->feature_items as $item) {
-			if ("active" == $item->feature_status) {
-				$this->total_points = $this->total_points + intval($item->item_points);
-			}
-		}
-	}
-	
-	public function get_total_site_points() {
-		return $this->total_points;
-	}
-	
-	public function get_total_achievable_points() {
+
+	/**
+	 * This function will calculate the total achievable points
+	 *
+	 * @return void
+	 */
+	private function calculate_total_achievable_points() {
 		foreach ($this->feature_items as $item) {
 			$this->total_achievable_points = $this->total_achievable_points + intval($item->item_points);
 		}
+	}
+
+	/**
+	 * This function will return the total points for the site
+	 *
+	 * @return int - the total points for the site
+	 */
+	public function get_total_site_points() {
+		if (empty($this->total_points)) $this->calculate_total_points();
+		return $this->total_points;
+	}
+
+	/**
+	 * This function will return the total achievable points
+	 *
+	 * @return int - the total achievable points
+	 */
+	public function get_total_achievable_points() {
+		if (empty($this->total_achievable_points)) $this->calculate_total_achievable_points();
 		return $this->total_achievable_points;
 	}
-	
-	public function check_remove_wp_generator_meta_feature($item) {
+
+	/**
+	 * This function will loop over each feature item, checking if it's enabled and setting it's feature status
+	 *
+	 * @return void
+	 */
+	private function check_and_set_feature_status() {
+		foreach ($this->feature_items as $item) {
+			call_user_func($item->callback, $item);
+		}
+	}
+
+	/**
+	 * This function will check if the feature database value is active and set the feature status
+	 *
+	 * @param AIOWPSecurity_Feature_Item $item - the item we want to check is active
+	 *
+	 * @return void
+	 */
+	private function is_feature_enabled($item) {
 		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_remove_wp_generator_meta_info') == '1') {
+		$aiowps_firewall_config = AIOS_Firewall_Resource::request(AIOS_Firewall_Resource::CONFIG);
+
+		$enabled = false;
+		foreach ($item->feature_options as $option) {
+			if ('1' == $aiowps_firewall_config->get_value($option) || '1' == $aio_wp_security->configs->get_value($option)) $enabled = true;
+		}
+
+		if ($enabled) {
 			$item->set_feature_status($this->feature_active);
 		} else {
 			$item->set_feature_status($this->feature_inactive);
 		}
 	}
 
-	public function check_prevent_hotlinking_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_prevent_hotlinking') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_user_accounts_change_admin_user_feature($item) {
+	/**
+	 * This function will check if the default admin user exists and set the feature status
+	 *
+	 * @param AIOWPSecurity_Feature_Item $item - the item we want to check is active
+	 *
+	 * @return void
+	 */
+	private function check_user_accounts_change_admin_user_feature($item) {
 		if (AIOWPSecurity_Utility::check_user_exists('admin')) {
 			 $item->set_feature_status($this->feature_inactive);
 		} else {
 			$item->set_feature_status($this->feature_active);
 		}
 	}
-   
-	public function check_user_accounts_display_name_feature($item) {
+
+	/**
+	 * This function will check if the username and nicknames are identical and set the feature status
+	 *
+	 * @param AIOWPSecurity_Feature_Item $item - the item we want to check is active
+	 *
+	 * @return void
+	 */
+	private function check_user_accounts_display_name_feature($item) {
 		if (AIOWPSecurity_Utility::check_identical_login_and_nick_names()) {
 			 $item->set_feature_status($this->feature_inactive);
 		} else {
@@ -376,170 +738,41 @@ class AIOWPSecurity_Feature_Item_Manager {
 		}
 	}
 
-	public function check_login_lockdown_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_login_lockdown') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-	
-	public function check_login_captcha_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_login_captcha') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_custom_login_captcha_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_custom_login_captcha') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_woo_login_captcha_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_woo_login_captcha') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_woo_lostpassword_captcha_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_woo_lostpassword_captcha') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-	
-	public function check_woo_register_captcha_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_woo_register_captcha') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_lost_password_captcha_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_lost_password_captcha') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_comment_captcha_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_comment_captcha') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_bp_register_captcha_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_bp_register_captcha') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_bbp_new_topic_captcha_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_bbp_new_topic_captcha') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-	
-	public function check_login_whitelist_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_whitelisting') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_force_logout_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_forced_logout') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-	
-	public function check_registration_approval_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_manual_registration_approval') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-	
-	public function check_registration_captcha_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_registration_page_captcha') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-	
-	public function check_enable_registration_honeypot_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_registration_honeypot') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-	
-	public function check_db_security_db_prefix_feature($item) {
+	/**
+	 * This function will check if the default database prefix is in use and set the feature status
+	 *
+	 * @param AIOWPSecurity_Feature_Item $item - the item we want to check is active
+	 *
+	 * @return void
+	 */
+	private function check_db_security_db_prefix_feature($item) {
 		global $wpdb;
-		if ('wp_' == $wpdb->prefix) {
+		$site_id = get_current_blog_id();
+		$default_prefix = (1 === $site_id) ? 'wp_' : "wp_{$site_id}_";
+		if ($default_prefix === $wpdb->prefix) {
 			 $item->set_feature_status($this->feature_inactive);
 		} else {
 			$item->set_feature_status($this->feature_active);
 		}
 	}
-	
-	public function check_db_security_db_backup_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_automated_backups') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
 
-	public function check_filesystem_permissions_feature($item) {
+	/**
+	 * This function will check the filesystem permissions and set the feature status
+	 *
+	 * @param AIOWPSecurity_Feature_Item $item - the item we want to check is active
+	 *
+	 * @return void
+	 */
+	private function check_filesystem_permissions_feature($item) {
 		//TODO
 		$is_secure = 1;
-		$util = new AIOWPSecurity_Utility_File;
-		$files_dirs_to_check = $util->files_and_dirs_to_check;
+		$files_dirs_to_check = AIOWPSecurity_Utility_File::get_files_and_dirs_to_check();
 
 		foreach ($files_dirs_to_check as $file_or_dir) {
 			$actual_perm = AIOWPSecurity_Utility_File::get_file_permission($file_or_dir['path']);
 			$is_secure = $is_secure*AIOWPSecurity_Utility_File::is_file_permission_secure($file_or_dir['permissions'], $actual_perm);
 		}
-		
+
 		//Only if all of the files' permissions are deemed secure give this a thumbs up
 		if (1 == $is_secure) {
 			$item->set_feature_status($this->feature_active);
@@ -548,177 +781,96 @@ class AIOWPSecurity_Feature_Item_Manager {
 		}
 	}
 
-	public function check_filesystem_file_editing_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_disable_file_editing') == '1') {
-			$item->set_feature_status($this->feature_active);
+	/**
+	 * This function will check if an item should be added to the feature list
+	 *
+	 * @param  array $item - the item we want to check if it should be added
+	 * @return bool
+	 */
+	public static function should_add_item($item) {
+		if (empty($item['feature_condition_callback'])) {
+			return true;
+		} elseif (is_callable($item['feature_condition_callback'])) {
+			return call_user_func($item['feature_condition_callback']);
 		} else {
-			$item->set_feature_status($this->feature_inactive);
+			error_log("Callback function set but not callable (coding error). Feature: " . $item['name']);
+			return false;
 		}
 	}
 
-	public function check_block_wp_files_access_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_prevent_default_wp_file_access') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-	
-	public function check_enable_ip_useragent_blacklist_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_blacklisting') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-	
-	public function check_enable_basic_firewall_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_basic_firewall') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
+	/**
+	 * Get the critical features.
+	 *
+	 * @return array
+	 */
+	public static function get_critical_features() {
+		$critical_features = array(
+			'user-accounts-change-admin-user' => array(
+				'name' => __('Admin username', 'all-in-one-wp-security-and-firewall'),
+				'url' => AIOWPSEC_USER_SECURITY_MENU_SLUG,
+			),
+			'user-login-login-lockdown' => array(
+				'name' => __('Login lockout', 'all-in-one-wp-security-and-firewall'),
+				'url' => AIOWPSEC_USER_SECURITY_MENU_SLUG . '&tab=login-lockout',
+			),
+			'filesystem-file-permissions' => array(
+				'name' => __('File permission', 'all-in-one-wp-security-and-firewall'),
+				'url' => AIOWPSEC_FILESYSTEM_MENU_SLUG,
+				'feature_callback' => 'is_main_site'
+			),
+			'firewall-basic-rules' => array(
+				'name' => __('Basic firewall', 'all-in-one-wp-security-and-firewall'),
+				'url' => AIOWPSEC_FIREWALL_MENU_SLUG . '&tab=htaccess-rules',
+				'feature_callback' => array('AIOWPSecurity_Utility', 'allow_to_write_to_htaccess')
+			),
+			'db-security-db-prefix' => array(
+				'name' => __('Database prefix', 'all-in-one-wp-security-and-firewall'),
+				'url' => AIOWPSEC_DB_SEC_MENU_SLUG,
+				'feature_callback' => 'is_main_site'
+			),
+			'filesystem-file-editing' => array(
+				'name' => __('PHP file editing', 'all-in-one-wp-security-and-firewall'),
+				'url' => AIOWPSEC_FILESYSTEM_MENU_SLUG . '&tab=file-protection',
+				'feature_callback' => array('AIOWPSecurity_Utility_Permissions', 'is_main_site_and_super_admin')
+			),
+			'bf-rename-login-page' => array(
+				'name' => __('Renamed login page', 'all-in-one-wp-security-and-firewall'),
+				'url' => AIOWPSEC_BRUTE_FORCE_MENU_SLUG,
+			),
+			'wp-generator-meta-tag' => array(
+				'name' => __('Hidden WP meta info', 'all-in-one-wp-security-and-firewall'),
+				'url' => AIOWPSEC_SETTINGS_MENU_SLUG . '&tab=wp-version-info',
+			),
+		);
+
+		$critical_features = apply_filters('aiowps_filter_critical_features_array', $critical_features);
+		$critical_features = array_filter($critical_features, array(self::class, 'should_add_feature'));
+
+		return $critical_features;
 	}
 
-	public function check_enable_pingback_firewall_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_pingback_firewall') == '1') {
-			$item->set_feature_status($this->feature_active);
+	/**
+	 * Determines whether a security feature should be activated based on its callback.
+	 *
+	 * This method checks if a feature should be added by evaluating its callback function.
+	 * If no callback is set, the feature is added by default. If a callback is set,
+	 * it must be callable and return a boolean value.
+	 *
+	 * @param array $feature An array containing feature details with the following keys:
+	 *                       'name'             => (string) Name of the feature
+	 *                       'feature_callback' => (callable|null) Optional callback to determine if feature should be added
+	 *
+	 * @return bool True if the feature should be added, false otherwise
+	 */
+	public static function should_add_feature($feature) {
+		if (empty($feature['feature_callback'])) {
+			return true;
+		} elseif (is_callable($feature['feature_callback'])) {
+			return call_user_func($feature['feature_callback']);
 		} else {
-			$item->set_feature_status($this->feature_inactive);
+			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Part of internal error reporting system.
+			error_log("Callback function set but not callable (coding error). Feature: " . $feature['name']);
+			return false;
 		}
 	}
-
-	public function check_debug_file_access_block_firewall_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_block_debug_log_file_access') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-	
-	public function check_disable_trace_track_firewall_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_disable_trace_and_track') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_disable_index_views_firewall_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_disable_index_views') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_enable_bfap_firewall_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_brute_force_attack_prevention') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_forbid_proxy_comments_firewall_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_forbid_proxy_comments') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_deny_bad_queries_firewall_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_deny_bad_query_strings') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_advanced_char_string_filter_firewall_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_advanced_char_string_filter') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_enable_5G_6G_blacklist_firewall_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_5g_firewall') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} elseif ($aio_wp_security->configs->get_value('aiowps_enable_6g_firewall') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_block_fake_googlebots_firewall_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_block_fake_googlebots') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_enable_404_blocking_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_404_IP_lockout') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-	
-	public function check_enable_rename_login_page_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_rename_login_page') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_enable_login_honeypot_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_login_honeypot') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
-	public function check_enable_block_spambots_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_spambot_blocking') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-	
-	public function check_enable_fcd_scan_feature($item) {
-		global $aio_wp_security;
-		if ($aio_wp_security->configs->get_value('aiowps_enable_automated_fcd_scan') == '1') {
-			$item->set_feature_status($this->feature_active);
-		} else {
-			$item->set_feature_status($this->feature_inactive);
-		}
-	}
-
 }

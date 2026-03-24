@@ -27,7 +27,7 @@ class SimpleTags_Admin_Mass {
 	public static function admin_menu() {
 		add_submenu_page(
 			self::MENU_SLUG,
-			esc_html__( 'TaxoPress: Mass Edit Terms', 'simple-tags' ),
+			esc_html__( 'Mass Edit Terms', 'simple-tags' ),
 			esc_html__( 'Mass Edit Terms', 'simple-tags' ),
 			'simple_tags',
 			'st_mass_terms',
@@ -55,7 +55,7 @@ class SimpleTags_Admin_Mass {
 		if ( isset( $_POST['update_mass'] ) ) {
 			// origination and intention
 			if ( ! ( wp_verify_nonce( sanitize_text_field($_POST['secure_mass']), 'st_mass_terms' ) ) ) {
-				add_settings_error( __CLASS__, __CLASS__, esc_html__( 'Security problem. Try again.', 'simple-tags' ), 'error' );
+				add_settings_error( __CLASS__, __CLASS__, esc_html__( 'Security problem. Try again.', 'simple-tags' ), 'error taxopress-notice' );
 
 				return false;
 			}
@@ -72,15 +72,65 @@ class SimpleTags_Admin_Mass {
 					// Remove empty and trim tag
 					$tags = array_filter( $tags, '_delete_empty_element' );
 
-					// Add new tag (no append ! replace !)
-					wp_set_object_terms( $object_id, $tags, SimpleTags_Admin::$taxonomy );
+                    $show_slug = SimpleTags_Plugin::get_option_value('enable_mass-edit_terms_slug');
+
+                    $term_ids = array();
+                    foreach ($tags as $tag) {
+                        $tag = trim($tag);
+                        if (empty($tag)) continue;
+                        
+                        if ($show_slug && preg_match('/^(.+?)\s*\(([^)]+)\)$/', $tag, $matches)) {
+                            $term_name = trim($matches[1]);
+                            $term_slug = trim($matches[2]);
+                            
+                            $term = get_term_by('slug', $term_slug, SimpleTags_Admin::$taxonomy);
+                            
+                            if ($term) {
+                                if ($term->name === $term_name) {
+                                    $term_ids[] = $term->term_id;
+                                } else {
+                                    $unique_slug = $term_slug;
+                                    $counter = 1;
+                                    while (get_term_by('slug', $unique_slug, SimpleTags_Admin::$taxonomy)) {
+                                        $unique_slug = $term_slug . '-' . $counter;
+                                        $counter++;
+                                    }
+                                    $new_term = wp_insert_term($term_name, SimpleTags_Admin::$taxonomy, array('slug' => $unique_slug));
+                                    if (!is_wp_error($new_term)) {
+                                        $term_ids[] = $new_term['term_id'];
+                                    }
+                                }
+                            } else {
+                                $new_term = wp_insert_term($term_name, SimpleTags_Admin::$taxonomy, array('slug' => $term_slug));
+                                if (!is_wp_error($new_term)) {
+                                    $term_ids[] = $new_term['term_id'];
+                                }
+                            }
+                        } else {
+                            if ($show_slug) {
+                                $tag = trim(preg_replace('/\s*\([^)]+\)$/', '', $tag));
+                            }
+                            
+                            $term = get_term_by('name', $tag, SimpleTags_Admin::$taxonomy);
+                            if ($term) {
+                                $term_ids[] = $term->term_id;
+                            } else {
+                                $new_term = wp_insert_term($tag, SimpleTags_Admin::$taxonomy);
+                                if (!is_wp_error($new_term)) {
+                                    $term_ids[] = $new_term['term_id'];
+                                }
+                            }
+                        }
+                    }
+
+					wp_set_object_terms( $object_id, $term_ids, SimpleTags_Admin::$taxonomy );
 					$counter ++;
 
 					// Clean cache
 					clean_post_cache( $object_id );
 				}
 
-				add_settings_error( __CLASS__, __CLASS__, sprintf( esc_html__( '%1$s %2$s(s) terms updated with success !', 'simple-tags' ), (int) $counter, strtolower( SimpleTags_Admin::$post_type_name ) ), 'updated' );
+				add_settings_error( __CLASS__, __CLASS__, sprintf( esc_html__( '%1$s %2$s(s) terms updated with success !', 'simple-tags' ), (int) $counter, strtolower( SimpleTags_Admin::$post_type_name ) ), 'updated taxopress-notice' );
 
 				return true;
 			}
@@ -88,6 +138,13 @@ class SimpleTags_Admin_Mass {
 
 		return false;
 	}
+
+    /**
+     * Helper function to extract term name (ignoring slug in brackets)
+     */
+    private static function extractTermName($term) {
+        return trim(preg_replace('/\s*\(.*?\)$/', '', $term));
+    }
 
 	/**
 	 * WP Page - Mass edit tags
@@ -104,15 +161,16 @@ class SimpleTags_Admin_Mass {
 		// Display message
 		settings_errors( __CLASS__ );
 		?>
+		<div class="taxopress-block-wrap">
 		<div class="wrap st_wrap tagcloudui st_mass_terms-page admin-settings">
-			<?php SimpleTags_Admin::boxSelectorTaxonomy( 'st_mass_terms' ); ?>
-
 			<form id="posts-filter" action="" method="get">
 				<input type="hidden" name="page" value="st_mass_terms"/>
 				<input type="hidden" name="taxo" value="<?php echo esc_attr( SimpleTags_Admin::$taxonomy ); ?>"/>
 				<input type="hidden" name="cpt" value="<?php echo esc_attr( SimpleTags_Admin::$post_type ); ?>"/>
 
-        <h2><?php _e( 'Mass edit terms', 'simple-tags' ); ?></h2>
+        <h1><?php _e( 'Mass Edit Terms', 'simple-tags' ); ?></h1>
+      <br>
+	  <div class="taxopress-description"><?php esc_html_e('This feature allows users to quickly add or remove terms from multiple posts.', 'simple-tags'); ?></div>
       <br>
 
 				<ul class="subsubsub">
@@ -149,7 +207,13 @@ class SimpleTags_Admin_Mass {
 					<input type="hidden" name="post_status" value="<?php echo esc_attr( sanitize_text_field($_GET['post_status']) ) ?>"/>
 				<?php endif; ?>
 
-				<div class="tablenav">
+
+				<p class="search-box">
+						<input type="text" id="post-search-input" placeholder="<?php esc_attr_e('Search post title and content', 'simple-tags'); ?>" name="s" value="<?php the_search_query(); ?>"/>
+						<input type="submit" value="<?php _e( 'Search', 'simple-tags' ); ?>" class="button"/>
+				</p>
+
+				<div class="tablenav custom-nav">
 					<?php
 					$posts_per_page = ( isset( $_GET['posts_per_page'] ) ) ? (int) $_GET['posts_per_page'] : 0;
 					if ( (int) $posts_per_page == 0 ) {
@@ -222,22 +286,47 @@ class SimpleTags_Admin_Mass {
 								<option <?php selected( $posts_per_page, 200 ); ?> value="200">200</option>
 							</select>
 
+							<?php
+
+								$current_filter_term = isset($_GET['massedit_filter_term']) ? sanitize_text_field($_GET['massedit_filter_term']) : '';
+								$selected_term_label  = '';
+
+								if ($current_filter_term) {
+									$existing_term = get_term_by('slug', $current_filter_term, SimpleTags_Admin::$taxonomy);
+									if ($existing_term && !is_wp_error($existing_term)) {
+										$show_slug = (int) SimpleTags_Plugin::get_option_value('enable_mass-edit_terms_slug') === 1;
+
+										if ( $show_slug ) {
+											$selected_term_label = sprintf('%s (%s)', $existing_term->name, $existing_term->slug);
+										} else {
+											$selected_term_label = $existing_term->name;
+										}
+									}
+								}
+							?>
+
+							<select name="massedit_filter_term" id="<?php echo esc_attr(SimpleTags_Admin::$taxonomy); ?>"
+									class="taxopress-select2-term-filter"
+									data-placeholder="<?php echo esc_attr__('Filter by term', 'simple-tags'); ?>"
+									style="min-width:200px;">
+								<option value=""><?php esc_html_e('All terms', 'simple-tags'); ?></option>
+								<?php if ($current_filter_term && $selected_term_label) : ?>
+									<option value="<?php echo esc_attr($current_filter_term); ?>" selected="selected">
+										<?php echo esc_html($selected_term_label); ?>
+									</option>
+								<?php endif; ?>
+							</select>
+
 							<input type="submit" id="post-query-submit" value="<?php _e( 'Filter', 'simple-tags' ); ?>"
 							       class="button-secondary"/>
 						<?php } ?>
+						<?php SimpleTags_Admin::boxSelectorTaxonomy( 'st_mass_terms' ); ?>
 					</div>
-
-
-					<p class="search-box">
-						<input type="text" id="post-search-input" name="s" value="<?php the_search_query(); ?>"/>
-						<input type="submit" value="<?php _e( 'Search', 'simple-tags' ); ?>" class="button"/>
-					</p>
-
 					<br style="clear:both;"/>
 				</div>
 			</form>
 
-			<br style="clear:both;"/>
+			<div style="clear:both;margin-bottom: 6px;"></div>
 
 			<?php if ( have_posts() ) :
 				add_filter( 'the_title', 'esc_html' );
@@ -262,7 +351,7 @@ class SimpleTags_Admin_Mass {
 										href="<?php echo esc_url(admin_url( 'post.php?action=edit&amp;post=' . get_the_ID() )); ?>"
 										title="<?php esc_attr_e( 'Edit', 'simple-tags' ); ?>"><?php echo ( esc_html(get_the_title()) == '' ) ? (int)get_the_ID() : esc_html(get_the_title()); ?></a>
 								</th>
-								<td><input id="tags-input<?php the_ID(); ?>" class="autocomplete-input tags_input"
+								<td><input id="tags-input<?php the_ID(); ?>" class="autocomplete-input tags_input taxopress-mass-edit-input"
 								           type="text" size="100" name="tags[<?php echo (int)get_the_ID(); ?>]"
 								           value="<?php echo esc_attr(SimpleTags_Admin::getTermsToEdit( SimpleTags_Admin::$taxonomy, get_the_ID() )); ?>"/>
 								</td>
@@ -293,6 +382,8 @@ class SimpleTags_Admin_Mass {
 		<div class="taxopress-right-sidebar admin-settings-sidebar">
 			<?php do_action('taxopress_admin_after_sidebar'); ?>
 		</div>
+		
+		</div>
 
 		<?php
 		do_action( 'simpletags-mass_terms', SimpleTags_Admin::$taxonomy );
@@ -309,6 +400,10 @@ class SimpleTags_Admin_Mass {
 	public static function edit_data_query( $q = false ) {
 		if ( false === $q ) {
 			$q = $_GET;
+		}
+
+		if ( ! isset( $q['massedit_filter_term'] ) ) {
+			$q['massedit_filter_term'] = '';
 		}
 
 		// Date
@@ -392,7 +487,38 @@ class SimpleTags_Admin_Mass {
 			$orderby = 'date';
 		}
 
-		wp( "post_type={$q['post_type']}&what_to_show=posts$post_status_q&posts_per_page={$q['posts_per_page']}&order=$order&orderby=$orderby" );
+		$args = array(
+			'post_type'      => $q['post_type'],
+			'what_to_show'   => 'posts',
+			'posts_per_page' => $q['posts_per_page'],
+			'order'          => $order,
+			'orderby'        => $orderby,
+		);
+
+		if ( ! empty( $q['post_status'] ) && in_array( $q['post_status'], array_keys( $post_stati ), true ) ) {
+			$args['post_status'] = $q['post_status'];
+			$args['perm']        = 'readable';
+		}
+
+		if ( ! empty( $q['s'] ) ) {
+			$args['s'] = sanitize_text_field( $q['s'] );
+		}
+
+		if ( ! empty( $q['m'] ) && (int) $q['m'] > 0 ) {
+			$args['m'] = (int) $q['m'];
+		}
+
+		if ( ! empty( $q['massedit_filter_term'] ) ) {
+			$args['tax_query'] = array(
+				array(
+					'taxonomy' => SimpleTags_Admin::$taxonomy,
+					'field'    => 'slug',
+					'terms'    => sanitize_text_field( $q['massedit_filter_term'] ),
+				),
+			);
+		}
+
+		query_posts( $args );
 
 		return array( $post_stati, $avail_post_stati );
 	}

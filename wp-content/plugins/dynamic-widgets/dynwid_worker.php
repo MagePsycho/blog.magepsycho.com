@@ -2,7 +2,6 @@
 /**
  * dynwid_worker.php - The worker does the actual work.
  *
- * @version $Id: dynwid_worker.php 1698398 2017-07-18 19:34:08Z qurl $
  * @copyright 2011 Jacco Drabbe
  */
 
@@ -226,11 +225,15 @@
 		            }
 	            } else if ( $condition->maintype == 'domain' && $condition->name == 'domain' ) {
           			$domains = unserialize($condition->value);
-		            $other_domain = ( $domain ) ? FALSE : TRUE;
-
+		         
+					$other_domain = ( $domain ) ? FALSE : TRUE;
 		            foreach ( $domains as $domain ) {
-		            	if ( $DW->hostname == $domain ) {
+		            	if ( $DW->hostname == $domain && !$other_domain) {
 				            $domain_tmp = $other_domain;
+		            		$DW->message('Flip switch for domain to ' . ( ($domain_tmp) ? 'TRUE' : 'FALSE' ));
+			            }
+						if ( $DW->hostname != $domain && $other_domain) {
+				            $domain_tmp = false;
 		            		$DW->message('Flip switch for domain to ' . ( ($domain_tmp) ? 'TRUE' : 'FALSE' ));
 			            }
 		            }
@@ -303,11 +306,12 @@
           	}
           	unset($url_tmp, $other_url);
 
-				if ( isset($domain_tmp) && $domain_tmp != $domain ) {
-					$DW->message('Exception triggered for domain, sets display to ' . ( ($domain_tmp) ? 'TRUE' : 'FALSE' ) . ' (rule EDMN1)');
-					$domain = $domain_tmp;
-				}
-				unset($domain_tmp, $other_domain);
+			if(isset($domain_tmp) && $domain_tmp != $domain ) {
+				$DW->message('Exception triggered for domain, sets display to ' . ( ($domain_tmp) ? 'TRUE' : 'FALSE' ) . ' (rule EDMN1)');
+				$domain = $domain_tmp;
+			}
+			
+			unset($domain_tmp, $other_domain);
 
           	if ( isset($ip_tmp) && $ip_tmp != $ip ) {
           		$DW->message('Exception triggered for ip, sets display to ' . ( ($ip_tmp) ? 'TRUE' : 'FALSE' ) . ' (rule EIP1)');
@@ -523,7 +527,7 @@
 							}
 						}
 					/* Only Author */
-					} else if ( count($act_author) > 0 && count($act_category == 0) ) {
+					} else if ( count($act_author) > 0 && count($act_category) == 0 ) {
 						if ( in_array($post->post_author, $act_author) ) {
 							$display = $other;
 							$DW->message('Exception triggered for ' . $widget_id . ' sets display to ' . $e . ' (rule ES2)');

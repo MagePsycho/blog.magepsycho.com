@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/wfFileUtils.php';
+require_once __DIR__ . '/wfScanFileProperties.php';
 
 class wfScanFile {
 
@@ -29,13 +30,17 @@ class wfScanFile {
 
 	public function createChild($childPath) {
 		return new self(
-			realpath(wfFileUtils::joinPaths($this->realPath, $childPath)),
+			wfFileUtils::realPath(wfFileUtils::joinPaths($this->realPath, $childPath)),
 			wfFileUtils::joinPaths($this->wordpressPath, $childPath)
 		);
 	}
 
 	public function __toString() {
 		return $this->getRealPath();
+	}
+
+	public function initializeProperties() {
+		return new wfScanFileProperties($this->realPath, $this->wordpressPath);
 	}
 
 }

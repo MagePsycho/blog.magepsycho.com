@@ -2,33 +2,27 @@
 /**
  * Plugin Name: TaxoPress
  * Plugin URI: https://wordpress.org/plugins/simple-tags/
- * Description: Extended Tag Manager. Terms suggestion, Mass Edit Terms, Auto link Terms, Ajax Autocompletion, Click Terms, Advanced manage terms, etc.
- * Version: 3.6.1
+ * Description: TaxoPress allows you to create and manage Tags, Categories, and all your WordPress taxonomy terms.
+ * Version: 3.44.0
  * Author: TaxoPress
  * Author URI: https://taxopress.com
  * Text Domain: simple-tags
  * Domain Path: /languages
  * Min WP Version: 4.9.7
- * Requires PHP: 5.6
+ * Requires PHP: 7.4
  * License: GPLv3
  *
  * Copyright (c) 2022 Taxopress
  *
- * ------------------------------------------------------------------------------
- * Based on Organize Series
- * Author: Darren Ethier
- * Copyright (c) 2007, 2011 Darren Ethier
- * ------------------------------------------------------------------------------
- *
  * @package 	simple-tags
  * @author		TaxoPress
- * @copyright   Copyright (C) 2007, 2011 Darren Ethier; modifications Copyright (C) 2022 TaxoPress
+ * @copyright   Copyright (c) 2022 Taxopress
  * @license		GNU General Public License version 2
- * @link		https://taxoPress.com/
+ * @link		https://TaxoPress.com/
  */
 
 ######################################
-/* 
+/*
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2 of the License, or
@@ -57,7 +51,7 @@ if (!defined('ABSPATH')) {
 }
 
 if (!defined('STAGS_VERSION')) {
-define('STAGS_VERSION', '3.6.1');
+define('STAGS_VERSION', '3.44.0');
 }
 
 
@@ -97,7 +91,7 @@ if ($pro_active) {
 if (defined('TAXOPRESS_FILE') || $pro_active) {
     if(!function_exists('deactivate_plugins')){
         require_once ABSPATH . 'wp-admin/includes/plugin.php';
-    }    
+    }
     //deactivate current plugin if pro is active
     deactivate_plugins( plugin_basename( __FILE__ ) );
 	return;
@@ -107,7 +101,7 @@ if (defined('TAXOPRESS_FILE') || $pro_active) {
 
 define ( 'TAXOPRESS_FILE', __FILE__ );
 
-define('STAGS_MIN_PHP_VERSION', '5.6');
+define('STAGS_MIN_PHP_VERSION', '7.4');
 define('STAGS_OPTIONS_NAME', 'simpletags'); // Option name for save settings
 define('STAGS_OPTIONS_NAME_AUTO', 'simpletags-auto'); // Option name for save settings auto terms
 
@@ -136,10 +130,10 @@ function init_free_simple_tags()
         new \PublishPress\Taxopress\TaxopressCoreAdmin();
     }
 }
-add_action('plugins_loaded', 'init_free_simple_tags');
+add_action('init', 'init_free_simple_tags', 0);
 
 // Activation, uninstall
 register_activation_hook(__FILE__, array('SimpleTags_Plugin', 'activation'));
 register_deactivation_hook(__FILE__, array('SimpleTags_Plugin', 'deactivation'));
 
-add_action('plugins_loaded', 'init_simple_tags');
+add_action('init', 'init_simple_tags', 0);

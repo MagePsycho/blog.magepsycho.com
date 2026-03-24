@@ -16,7 +16,7 @@ final class Module_Config {
 		self::T_PASSWORD_REQUIREMENTS,
 		self::T_TOOLS,
 	];
-	const TRANSLATE = [ 'title', 'description', 'help', 'keywords', 'enumNames' ];
+	const TRANSLATE = [ 'title', 'description', 'help', 'keywords' ];
 
 	/** @var array */
 	private $config;
@@ -57,7 +57,7 @@ final class Module_Config {
 		}
 
 		if ( ! $for ) {
-			$for = \ITSEC_Core::is_pro() ? 'pro' : 'free';
+			$for = \ITSEC_Core::get_install_type();
 		}
 
 		return $status[ $for ];
@@ -65,6 +65,14 @@ final class Module_Config {
 
 	public function get_type(): string {
 		return $this->get_config()['type'];
+	}
+
+	public function can_load_early(): bool {
+		return $this->get_load() === 'early';
+	}
+
+	public function get_load(): string {
+		return $this->get_config()['load'] ?? 'normal';
 	}
 
 	public function is_deprecated(): bool {
@@ -135,6 +143,10 @@ final class Module_Config {
 		return $this->get_config()['onboard-settings'] ?? [];
 	}
 
+	public function get_telemetry_settings(): array {
+		return $this->get_config()['telemetry-settings'] ?? [];
+	}
+
 	public function get_scheduling(): array {
 		return $this->get_config()['scheduling'] ?? [];
 	}
@@ -157,6 +169,10 @@ final class Module_Config {
 
 	public function get_export_excluded_settings(): array {
 		return $this->get_config()['import-export']['exclude-settings'] ?? [];
+	}
+
+	public function get_encrypted_user_meta_keys(): array {
+		return $this->get_config()['encryption']['user-meta'] ?? [];
 	}
 
 	/**
@@ -248,6 +264,10 @@ final class Module_Config {
 
 		if ( $with->get_onboard_settings() ) {
 			$new->config['onboard-settings'] = array_merge( $new->get_onboard_settings(), $with->get_onboard_settings() );
+		}
+
+		if ( $with->get_telemetry_settings() ) {
+			$new->config['telemetry-settings'] = array_merge( $new->get_telemetry_settings(), $with->get_telemetry_settings() );
 		}
 
 		if ( $with->get_scheduling() ) {
@@ -351,7 +371,7 @@ final class Module_Config {
 
 		if ( isset( $transformed['settings'] ) ) {
 			if ( ! isset( $transformed['settings']['$schema'] ) ) {
-				$transformed['settings']['$schema'] = 'http://json-schema.org/draft-04/schema#';
+				$transformed['settings']['$schema'] = 'http://json-schema.org/draft-07/schema#';
 			}
 
 			if ( ! isset( $transformed['settings']['id'] ) ) {

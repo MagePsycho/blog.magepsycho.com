@@ -42,3 +42,12 @@
         transform: rotate(3000deg)
     }
 }
+.bws_info.warning {
+	color: red;
+}
+.gglcptch_error_text {
+	display: none;
+}
+.gglcptch-weekdays-wrapper td {
+	vertical-align: top;
+}

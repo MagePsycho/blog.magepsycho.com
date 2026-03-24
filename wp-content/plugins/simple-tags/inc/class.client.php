@@ -7,11 +7,12 @@ class SimpleTags_Client {
 	 * @return boolean
 	 */
 	public function __construct() {
+
 		// Load translation
 		add_action( 'init', array( __CLASS__, 'init_translation' ) );
 
-		// Register media tags taxonomy
-		add_action( 'init', array( $this, 'simple_tags_register_media_tag' ) );
+		// Enqueue frontend scripts
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_displayformat_scripts' ), 999 );
 
         require( STAGS_DIR . '/inc/class.client.autolinks.php' );
         new SimpleTags_Client_Autolinks();
@@ -30,7 +31,7 @@ class SimpleTags_Client {
 		if ( (int) SimpleTags_Plugin::get_option_value( 'active_related_posts_new' ) === 1 ) {
             require_once STAGS_DIR . '/inc/related-posts-action.php';
         }
-		if ( (int) SimpleTags_Plugin::get_option_value( 'active_related_posts' ) === 1 || (int) SimpleTags_Plugin::get_option_value( 'active_related_posts_new' ) === 1 ) {
+		if ( (int) SimpleTags_Plugin::get_option_value( 'active_related_posts_new' ) === 1 ) {
 			require( STAGS_DIR . '/inc/class.client.related_posts.php' );
 			new SimpleTags_Client_RelatedPosts();
 		}
@@ -63,6 +64,45 @@ class SimpleTags_Client {
 		return true;
 	}
 
+	function enqueue_displayformat_scripts() {
+
+		if ( (int) SimpleTags_Plugin::get_option_value( 'disable_frontend_scripts' ) === 1 ) {
+			return;
+		}
+
+		if ( ! apply_filters( 'taxopress_load_frontend_scripts', true ) ) {
+			return;
+		}
+
+		wp_register_script('taxopress-frontend-js', STAGS_URL . '/assets/frontend/js/frontend.js', array('jquery'), STAGS_VERSION);
+		wp_register_style('taxopress-frontend-css', STAGS_URL . '/assets/frontend/css/frontend.css', array(), STAGS_VERSION, 'all');
+
+		wp_enqueue_script('taxopress-frontend-js');
+		wp_enqueue_style('taxopress-frontend-css');
+
+	}
+
+
+	/**
+	 * Retrieves the currently queried object.
+	 *
+	 * Wrapper for WP_Query::get_queried_object().
+	 *
+	 * @since 3.1.0
+	 *
+	 * @global WP_Query $wp_query WordPress Query object.
+	 *
+	 * @return WP_Term|WP_Post_Type|WP_Post|WP_User|null The queried object.
+	 */
+	public static function taxopress_get_queried_object() {
+		global $wp_query;
+
+		if (!is_object($wp_query)) {
+			return null;
+		}
+		
+		return $wp_query->get_queried_object();
+	}
 
 	/**
 	 * Add cpt to taxonomy during the query
@@ -84,7 +124,7 @@ class SimpleTags_Client {
             return $query;
         }
         if ( $query->is_category == true || $query->is_tag == true || $query->is_tax == true ) {
-            $get_queried_object = @get_queried_object();
+            $get_queried_object = self::taxopress_get_queried_object();
             if(is_object($get_queried_object)){
 				if(!isset($get_queried_object->taxonomy)){
                     return $query;
@@ -118,58 +158,6 @@ class SimpleTags_Client {
 		}
         return $query;
 	}
-
-	/**
-	 * Taxonomy: Media Tags.
-	 */
-	public function simple_tags_register_media_tag() {
-
-    if((int)get_option('taxopress_media_tag_deleted') === 0){
-	$labels = [
-		"name" => __( "Media Tags", "simple-tags" ),
-		"singular_name" => __( "Media Tag", "simple-tags" ),
-		"menu_name" => __( "Media Tags", "simple-tags" ),
-		"all_items" => __( "All Media Tags", "simple-tags" ),
-		"edit_item" => __( "Edit Media Tag", "simple-tags" ),
-		"view_item" => __( "View Media Tag", "simple-tags" ),
-		"update_item" => __( "Update Media Tag name", "simple-tags" ),
-		"add_new_item" => __( "Add new Media Tag", "simple-tags" ),
-		"new_item_name" => __( "New Media Tag name", "simple-tags" ),
-		"parent_item" => __( "Parent Media Tag", "simple-tags" ),
-		"parent_item_colon" => __( "Parent Media Tag:", "simple-tags" ),
-		"search_items" => __( "Search Media Tags", "simple-tags" ),
-		"popular_items" => __( "Popular Media Tags", "simple-tags" ),
-		"separate_items_with_commas" => __( "Separate Media Tags with commas", "simple-tags" ),
-		"add_or_remove_items" => __( "Add or remove Media Tags", "simple-tags" ),
-		"choose_from_most_used" => __( "Choose from the most used Media Tags", "simple-tags" ),
-		"not_found" => __( "No Media Tags found", "simple-tags" ),
-		"no_terms" => __( "No Media Tags", "simple-tags" ),
-		"items_list_navigation" => __( "Media Tags list navigation", "simple-tags" ),
-		"items_list" => __( "Media Tags list", "simple-tags" ),
-		"back_to_items" => __( "Back to Media Tags", "simple-tags" ),
-	];
-
-	$args = [
-		"label" => __( "Media Tags", "simple-tags" ),
-		"labels" => $labels,
-		"public" => true,
-		"publicly_queryable" => true,
-		"hierarchical" => false,
-		"show_ui" => true,
-		"show_in_menu" => true,
-		"show_in_nav_menus" => true,
-		"query_var" => true,
-		"update_count_callback" => '_update_generic_term_count',
-		"rewrite" => [ 'slug' => 'media_tag', 'with_front' => true, ],
-		"show_admin_column" => false,
-		"show_in_rest" => true,
-		"rest_base" => "media_tag",
-		"rest_controller_class" => "WP_REST_Terms_Controller",
-		"show_in_quick_edit" => false,
-	];
-	register_taxonomy( "media_tag", [ "attachment" ], $args );
-    }
-    }
 
 	/**
 	 * Load translations
@@ -255,18 +243,44 @@ class SimpleTags_Client {
 	}
 
 	/**
+	 * Retrieve the post count for a term across all taxonomies.
+	 * 
+	 * This function queries terms based on the given term name and returns the number of posts associated with the first matching term.
+	 * It does not require specifying a taxonomy and will search across all public taxonomies.
+	 * 
+	 * @param string $item
+	 * @return int The number of posts associated with the first matching term. Returns 0 if no term is found or if it has no posts.
+	 */
+	public static function get_term_post_counts( $item ) {
+
+			$terms = get_terms( array(
+				'name' => strip_tags($item),
+				'hide_empty' => false,
+				'fields' => 'all',
+				'number' => 1,
+				) );	
+
+				// If terms exist, return the first matching term's count
+				if ( ! empty( $terms ) && ! is_wp_error( $terms ) ) {
+					return $terms[0]->count;
+				}	
+
+				return 0;
+	    }
+
+	/**
 	 * Format data for output
 	 *
 	 * @param string $html_class
 	 * @param string $format
 	 * @param string $title
-	 * @param string $content
+	 * @param string|array $content
 	 * @param boolean $copyright
 	 * @param string $separator
 	 *
 	 * @return string|array
 	 */
-	public static function output_content( $html_class = '', $format = 'list', $title = '', $content = '', $copyright = true, $separator = '', $div_class = '', $a_class = '' ) {
+	public static function output_content( $html_class = '', $format = 'list', $title = '', $content = '', $copyright = true, $separator = '', $div_class = '', $a_class = '', $before = '', $after = '', $taxonomy = '') {
 		if ( empty( $content ) ) {
 			return ''; // return nothing
 		}
@@ -275,13 +289,196 @@ class SimpleTags_Client {
 			return $content; // Return PHP array if format is array
 		}
 
+		$title = taxopress_sanitize_text_field($title);
+
 		if ( is_array( $content ) ) {
 			switch ( $format ) {
 				case 'list' :
-					$output = '<ul class="' . $html_class . '">' . "\n\t" . '<li>' . implode( "</li>\n\t<li>", $content ) . "</li>\n</ul>\n";
+					$output = ''. $before .' <ul class="' . $html_class . '">' . "\n\t" . '<li>' . implode( "</li>\n\t<li>", $content ) . "</li>\n</ul> {$after}\n";
+					break;
+				case 'ol' :
+					$output = ''. $before .' <ol class="' . $html_class . '">' . "\n\t" . '<li>' . implode( "</li>\n\t<li>", $content ) . "</li>\n</ol> {$after}\n";
+					break;
+				case 'comma':
+					$output = ''. ''. ''. ''. $before .  implode($separator, $content) . " {$after}\n";
+					break;
+				case 'table' :
+					$output = $before . '<table class="' . $html_class . ' taxopress-table-container">' . "\n\t";
+					$count = 0;
+					foreach ($content as $item) {
+
+					// If $item is an array, use its fields
+					if (is_array($item) && isset($item['html'], $item['count'])) {
+						$term_html = $item['html'];
+						$post_count = $item['count'];
+					} else {
+						// fallback for legacy
+						$term_html = $item;
+						$post_count = self::get_term_post_counts(strip_tags($item));
+					}
+
+						// if ( $post_count === 0 ) {
+						// 	continue;
+						// }	
+
+						$display_class = $count >= 6 ? 'hidden' : '';
+						$output .= '<tr class="taxopress-table-row ' . $display_class . '"><td>' . $term_html . '</td><td class="taxopress-post-count">' . $post_count . '</td></tr>' . "\n\t";
+						$count++;
+					}
+					if ($count > 6) {
+						$output .= '<tr><td class="taxopress-see-more-container" colspan="2">';
+						$output .= '<span class="taxopress-see-more-link">see more <span class="taxopress-arrow right"></span></span>';	
+						$output .= '<span class="taxopress-close-table-link">close table <span class="taxopress-arrow down"></span></span>';
+						$output .= '</td></tr>' . "\n";
+					}
+					$output .= "</table>" . $after . "\n";
+					break;
+				case 'border':
+					$output = '<div class="taxopress-border-cloud ' . $html_class . '">'. $before .' ' . "\n\t" . implode( "{$separator}\n", $content ) . " {$after}</div>\n";
+					break;	
+				case 'box':
+					$output = '<div class="taxopress-box-list ' . $html_class . '">'. $before .' ' . "\n\t" . implode( "{$separator}\n", $content ) . " {$after}</div>\n";
+					break;
+				case 'parent/child':
+                    $output = $before . '<ul class="' . $html_class . ' taxopress-parent-child-list">' . "\n";
+
+					// Cache term hierarchy to avoid repeated queries
+					static $term_hierarchy = [];
+					$cache_key = md5($taxonomy . serialize($content));
+							
+					if (!isset($term_hierarchy[$cache_key])) {
+						$terms_by_parent = [];
+						$all_terms = [];
+						
+						$term_names = array_map(function($term_html) {
+							return strip_tags($term_html);
+						}, array_filter($content, 'trim'));
+						
+						if (!empty($term_names)) {
+							$terms = get_terms([
+								'taxonomy' => $taxonomy,
+								'name' => $term_names,
+								'hide_empty' => false,
+								'update_term_meta_cache' => false
+							]);
+							
+							if (!is_wp_error($terms)) {
+								foreach ($terms as $term) {
+									$all_terms[$term->term_id] = [
+										'term' => $term,
+										'html' => $content[array_search($term->name, $term_names)],
+										'is_parent' => false
+									];
+									
+									$parent_id = $term->parent ?: '0';
+									$terms_by_parent[$parent_id][] = $term->term_id;
+								}
+								
+								foreach ($terms_by_parent as $child_ids) {
+									foreach ($child_ids as $child_id) {
+										if (isset($terms_by_parent[$child_id])) {
+											$all_terms[$child_id]['is_parent'] = true;
+										}
+									}
+								}
+							}
+						}
+						
+						$term_hierarchy[$cache_key] = [
+							'terms' => $all_terms,
+							'hierarchy' => $terms_by_parent
+						];
+					}
+							
+					// Use cached hierarchy
+					$data = $term_hierarchy[$cache_key];
+					$all_terms = $data['terms'];
+					$terms_by_parent = $data['hierarchy'];
+
+					// Group terms by parent
+					$terms_by_parent = [];
+					$all_terms = [];
+						
+					// First pass - collect all terms
+					foreach ($content as $term_html) {
+						if (empty(trim($term_html))) continue;
+						
+						$term_name = strip_tags($term_html);
+						$term = get_term_by('name', $term_name, $taxonomy);
+						
+						if (!$term) continue;
+
+						// Store term for reference
+						$all_terms[$term->term_id] = [
+							'term' => $term,
+							'html' => $term_html,
+							'is_parent' => false
+						];
+						
+						$parent_id = $term->parent ?: '0';
+						if (!isset($terms_by_parent[$parent_id])) {
+							$terms_by_parent[$parent_id] = [];
+						}
+						$terms_by_parent[$parent_id][] = $term->term_id;
+					}
+
+					foreach ($terms_by_parent as $parent_id => $children) {
+						foreach ($children as $child_id) {
+							if (isset($terms_by_parent[$child_id])) {
+								$all_terms[$child_id]['is_parent'] = true;
+							}
+						}
+					}
+
+					$output_term = function($term_id, $level = 0) use (&$output_term, &$all_terms, &$terms_by_parent) {
+						if (!isset($all_terms[$term_id])) return '';
+
+						$term_data = $all_terms[$term_id];
+						$html = str_repeat("\t", $level);
+						$html .= '<li class="taxopress-parent-term">' . $term_data['html'];
+						
+						if (isset($terms_by_parent[$term_id])) {
+							$html .= "\n" . str_repeat("\t", $level + 1);
+							$html .= '<ul class="taxopress-child-list">' . "\n";
+							foreach ($terms_by_parent[$term_id] as $child_id) {
+								$html .= $output_term($child_id, $level + 2);
+							}
+							$html .= str_repeat("\t", $level + 1) . "</ul>\n";
+						}
+						
+						$html .= str_repeat("\t", $level) . "</li>\n";
+						return $html;
+					};
+					$display_mode = isset($current['display_mode']) ? $current['display_mode'] : 'parents_and_sub';
+					
+					if ($display_mode === 'parents_only') {
+						foreach ($all_terms as $term_id => $term_data) {
+							if ($term_data['is_parent']) {
+								$output .= '<li class="taxopress-parent-term">' . $term_data['html'] . "</li>\n";
+							}
+						}
+					} elseif ($display_mode === 'sub_terms_only') {
+						foreach ($all_terms as $term_id => $term_data) {
+							if ($term_data['term']->parent > 0) {
+								$output .= '<li class="taxopress-child-term">' . $term_data['html'] . "</li>\n";
+							}
+						}
+					} else {
+						// Display full hierarchy
+						// Start with root terms or terms whose parents aren't in our set
+						foreach ($all_terms as $term_id => $term_data) {
+							$term = $term_data['term'];
+							if ($term->parent === 0 || !isset($all_terms[$term->parent])) {
+								$output .= $output_term($term_id);
+							}
+						}
+					}
+
+					$output .= "</ul>" . $after . "\n";
+					return $output;
 					break;
 				default :
-					$output = '<div class="' . $html_class . '">' . "\n\t" . implode( "{$separator}\n", $content ) . "</div>\n";
+					$output = '<div class="' . $html_class . '">'. $before .' ' . "\n\t" . implode( "{$separator}\n", $content ) . " {$after}</div>\n";
 					break;
 			}
 		} else {
@@ -291,10 +488,57 @@ class SimpleTags_Client {
 					$output = $content;
 					break;
 				case 'list' :
-					$output = '<ul class="' . $html_class . '">' . "\n\t" . '<li>' . $content . "</li>\n\t" . "</ul>\n";
+					$output = ''. $before .' <ul class="' . $html_class . '">' . "\n\t" . '<li>' . $content . "</li>\n\t" . "</ul> {$after}\n";
 					break;
+				case 'comma':
+					$output = ''. ''. ''. ''. $before . $content . " {$after}\n";
+					break;
+				case 'table':
+					$output = $before . '<table class="' . $html_class . '">' . "\n\t"
+						. '<tr><td>' . $content . '</td></tr>' . "\n\t"
+						. "</table>" . $after . "\n";
+					break;
+				case 'border':
+					$output = '<div class="taxopress-border-cloud ' . $html_class . '">'. $before .' ' . "\n\t" . $content . " {$after} </div>\n";
+					break;
+				case 'box':	
+					$output = '<div class="taxopress-box-list ' . $html_class . '">'. $before .' ' . "\n\t" . $content . " {$after} </div>\n";
+					break;
+				case 'parent/child':
+					$output = $before . '<ul class="' . esc_attr($html_class) . ' taxopress-parent-child-list">' . "\n";
+					$lines = explode("\n", $content);
+					$inside_sublist = false;
+				
+					foreach ($lines as $line) {
+						$line = trim($line);
+						if (empty($line)) {
+							continue;
+						}
+				
+						if (strpos($line, 'taxopress-parent-term') !== false) {
+							if ($inside_sublist) {
+								$output .= "</ul></li>\n";
+								$inside_sublist = false;
+							}
+				
+							$output .= '<li class="parent-item" style="list-style-type: disc; color: black;">' . $line;
+				
+							$output .= "\n<ul class=\"child-items\" style=\"list-style-type: circle; color: black;\">\n";
+							$inside_sublist = true;
+						} else {
+							$output .= '<li class="child-item">' . $line . "</li>\n";
+						}
+					}
+				
+					// Close any open tags
+					if ($inside_sublist) {
+						$output .= "</ul></li>\n";
+					}
+				
+					$output .= "</ul>" . $after . "\n";
+					break;					
 				default :
-					$output = '<div class="' . $html_class . '">' . "\n\t" . $content . "</div>\n";
+					$output = '<div class="' . $html_class . '">'. $before .' ' . "\n\t" . $content . " {$after} </div>\n";
 					break;
 			}
 		}
@@ -304,8 +548,8 @@ class SimpleTags_Client {
 			$wrap_div_class_open = '<div class="'.taxopress_format_class($div_class).'">';
 			$wrap_div_class_close = '</div>';
 		}else{
-			$wrap_div_class_open = '';
-			$wrap_div_class_close = '';
+			$wrap_div_class_open = '<div class="taxopress-output-wrapper"> ';
+			$wrap_div_class_close = '</div>';
 		}
 		// Replace false by empty
 		$title = trim( $title );
@@ -344,19 +588,27 @@ class SimpleTags_Client {
 	 */
 	public static function format_internal_tag( $element_loop = '', $term = null, $rel = '', $scale_result = 0, $scale_max = null, $scale_min = 0, $largest = 0, $smallest = 0, $unit = '', $maxcolor = '', $mincolor = '' ) {
 		// Need term object
-		$element_loop = str_replace( '%tag_link%', esc_url( get_term_link( $term, $term->taxonomy ) ), $element_loop );
+		$tag_link = get_term_link( $term, $term->taxonomy );
+		$element_loop = str_replace( '%tag_link%', esc_url( $tag_link ), $element_loop );
 		$element_loop = str_replace( '%tag_feed%', esc_url( get_term_feed_link( $term->term_id, $term->taxonomy, '' ) ), $element_loop );
 
 		$element_loop = str_replace( '%tag_name%', esc_html( $term->name ), $element_loop );
 		$element_loop = str_replace( '%tag_name_attribute%', esc_html( strip_tags( $term->name ) ), $element_loop );
 		$element_loop = str_replace( '%tag_id%', $term->term_id, $element_loop );
 		$element_loop = str_replace( '%tag_count%', (int) $term->count, $element_loop );
+		$element_loop = str_replace( '%tag_description%', esc_html( $term->description ), $element_loop );
 
 		// Need rel
 		$element_loop = str_replace( '%tag_rel%', $rel, $element_loop );
 
 		// Need max/min/scale and other :)
 		if ( $scale_result !== null ) {
+			$scale_result = (int) $scale_result;
+			$scale_min = (int) $scale_min;
+			$scale_max = (int) $scale_max;
+			$largest = (int) $largest;
+			$smallest = (int) $smallest;
+
 			$element_loop = str_replace( '%tag_size%', 'font-size:' . self::round( ( $scale_result - $scale_min ) * ( $largest - $smallest ) / ( $scale_max - $scale_min ) + $smallest, 2 ) . $unit . ';', $element_loop );
 			$element_loop = str_replace( '%tag_color%', 'color:' . self::get_color_by_scale( self::round( ( $scale_result - $scale_min ) * ( 100 ) / ( $scale_max - $scale_min ), 2 ), $mincolor, $maxcolor ) . ';', $element_loop );
 			$element_loop = str_replace( '%tag_scale%', $scale_result, $element_loop );

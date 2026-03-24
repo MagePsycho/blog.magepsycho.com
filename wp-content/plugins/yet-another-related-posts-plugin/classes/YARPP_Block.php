@@ -173,7 +173,7 @@ if ( ! class_exists( 'YARPP_Block', false ) && function_exists( 'register_block_
 			);
 			wp_register_style(
 				'yarpp-block-style',
-				plugins_url( 'style/yarpp-block-editor.css', dirname( __FILE__ ) ),
+				plugins_url( 'style/yarpp-block-editor.css', __DIR__ ),
 				array( 'wp-edit-blocks' ),
 				$version
 			);
@@ -184,7 +184,7 @@ if ( ! class_exists( 'YARPP_Block', false ) && function_exists( 'register_block_
 				'template'             => $this->yarpp_get_block_templates(),
 				'selected_theme_style' => $chosen_template,
 				'default_domain'       => $is_widget_page ? 'widget' : 'block',
-				'yarpp_is_admin'             => $yarpp_is_admin,
+				'yarpp_is_admin'       => $yarpp_is_admin,
 			);
 			wp_localize_script( 'yarpp-block', 'yarpp_localized', $localized_variables );
 			$args = array(
@@ -243,7 +243,6 @@ if ( ! class_exists( 'YARPP_Block', false ) && function_exists( 'register_block_
 				)
 			);
 		}
-
 	}
 	new YARPP_Block();
 }

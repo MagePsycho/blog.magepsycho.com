@@ -165,6 +165,8 @@ class Disqus {
         $this->loader->add_action( 'admin_enqueue_scripts', $plugin_admin, 'enqueue_scripts' );
         $this->loader->add_action( 'admin_menu', $plugin_admin, 'dsq_contruct_admin_menu' );
         $this->loader->add_action( 'admin_bar_menu', $plugin_admin, 'dsq_construct_admin_bar', 999 );
+        $this->loader->add_action( 'admin_notices', $plugin_admin, 'dsq_display_ads_notice' );
+        $this->loader->add_action( 'wp_ajax_disqus_dismiss_ads_notice', $plugin_admin, 'dsq_dismiss_ads_notice' );
     }
 
     /**
@@ -180,6 +182,7 @@ class Disqus {
         $this->loader->add_filter( 'comments_number', $plugin_public, 'dsq_comments_link_template' );
         $this->loader->add_filter( 'comments_template', $plugin_public, 'dsq_comments_template' );
         $this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_comment_count' );
+        $this->loader->add_action( 'comment_form_before', $plugin_public, 'hide_block_theme_comment_section' );
         $this->loader->add_action( 'wp_enqueue_scripts', $plugin_public, 'enqueue_comment_embed' );
         $this->loader->add_action( 'show_user_profile', $plugin_public, 'dsq_close_window_template' );
     }

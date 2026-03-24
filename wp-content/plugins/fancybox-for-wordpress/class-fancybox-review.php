@@ -9,13 +9,6 @@ class Fancybox_Review {
 	
 	function __construct() {
 
-		$this->messages = array(
-			'notice'  => __( "Hi there! Stoked to see you're using Fancybox for a few days now - hope you like it! And if you do, please consider rating it. It would mean the world to us.  Keep on rocking!", 'mfbfw' ),
-			'rate'    => __( 'Rate the plugin', 'mfbfw' ),
-			'rated'   => __( 'Remind me later', 'mfbfw' ),
-			'no_rate' => __( 'Don\'t show again', 'mfbfw' ),
-		);
-
 		if ( isset( $args['messages'] ) ) {
 			$this->messages = wp_parse_args( $args['messages'], $this->messages );
 		}
@@ -25,6 +18,13 @@ class Fancybox_Review {
 	}
 
 	public function init() {
+		$this->messages = array(
+			'notice'  => __( "Hi there! Stoked to see you're using Fancybox for a few days now - hope you like it! And if you do, please consider rating it. It would mean the world to us.  Keep on rocking!", 'mfbfw' ),
+			'rate'    => __( 'Rate the plugin', 'mfbfw' ),
+			'rated'   => __( 'Remind me later', 'mfbfw' ),
+			'no_rate' => __( 'Don\'t show again', 'mfbfw' ),
+		);
+
 		if ( ! is_admin() ) {
 			return;
 		}
@@ -71,7 +71,7 @@ class Fancybox_Review {
 
 		?>
 		<div id="<?php echo esc_attr($this->slug) ?>-epsilon-review-notice" class="notice notice-success is-dismissible" style="margin-top:30px;">
-			<p><?php echo sprintf( esc_html( $this->messages['notice'] ), $this->value ) ; ?></p>
+			<p><?php echo sprintf( esc_html( $this->messages['notice'] ), esc_html( $this->value ) ) ; ?></p>
 			<p class="actions">
 				<a id="epsilon-rate" href="<?php echo esc_url( $url ) ?>" target="_blank" class="button button-primary epsilon-review-button">
 					<?php echo esc_html( $this->messages['rate'] ); ?>
@@ -137,8 +137,8 @@ class Fancybox_Review {
 						data['epsilon-review'] = 1;
 					}
 
-					$.post( '<?php echo admin_url( 'admin-ajax.php' ) ?>', data, function( response ) {
-						$( '#<?php echo $this->slug ?>-epsilon-review-notice' ).slideUp( 'fast', function() {
+					$.post( '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ) ?>', data, function( response ) {
+						$( '#<?php echo esc_html( $this->slug ) ?>-epsilon-review-notice' ).slideUp( 'fast', function() {
 							$( this ).remove();
 						} );
 					});
@@ -153,8 +153,8 @@ class Fancybox_Review {
 						check: 'epsilon-later'
 					};
 
-					$.post( '<?php echo admin_url( 'admin-ajax.php' ) ?>', data, function( response ) {
-						$( '#<?php echo $this->slug ?>-epsilon-review-notice' ).slideUp( 'fast', function() {
+					$.post( '<?php echo esc_url( admin_url( 'admin-ajax.php' ) ) ?>', data, function( response ) {
+						$( '#<?php echo esc_html( $this->slug ) ?>-epsilon-review-notice' ).slideUp( 'fast', function() {
 							$( this ).remove();
 						} );
 					});

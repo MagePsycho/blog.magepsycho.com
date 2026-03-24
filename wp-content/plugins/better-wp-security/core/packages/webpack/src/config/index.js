@@ -1,22 +1,21 @@
 const LiveReloadPlugin = require( 'webpack-livereload-plugin' );
 const MiniCssExtractPlugin = require( 'mini-css-extract-plugin' );
-const ManifestPlugin = require( 'webpack-manifest-plugin' );
-const FilterWarningsPlugin = require( 'webpack-filter-warnings-plugin' );
+const { WebpackManifestPlugin } = require( 'webpack-manifest-plugin' );
 const CopyWebpackPlugin = require( 'copy-webpack-plugin' );
 const CustomTemplatedPathPlugin = require( '../custom-templated-path-webpack-plugin' );
 const DynamicPublicPath = require( '../dynamic-public-path' );
 const StyleOnlyEntryPlugin = require( '../style-only-entry-plugin' );
-const SplitChunkName = require( '../split-chunk-name' );
 const {
 	generate: generateManifest,
 	serialize: serializeManifest,
 } = require( '../manifest' );
 const wpExternals = require( '../wp-externals' );
-const debug = process.env.NODE_ENV !== 'production';
 const glob = require( 'glob' );
 const path = require( 'path' );
+const fs = require( 'fs' );
 const autoprefixer = require( 'autoprefixer' );
-const webpack = require( 'webpack' );
+
+const debug = process.env.NODE_ENV !== 'production';
 
 module.exports = function makeConfig( directory, pro ) {
 	const useMinExt = pro && ! debug;
@@ -90,7 +89,7 @@ module.exports = function makeConfig( directory, pro ) {
 	const dist = path.resolve( directory, 'dist' );
 	const config = {
 		context: directory,
-		devtool: debug ? 'inline-sourcemap' : false,
+		devtool: debug ? 'inline-source-map' : false,
 		mode: debug ? 'development' : 'production',
 		entry: {
 			...entries,
@@ -101,9 +100,11 @@ module.exports = function makeConfig( directory, pro ) {
 		output: {
 			path: dist,
 			filename: ! useMinExt ? '[name].js' : '[name].min.js',
-			jsonpFunction: 'itsecWebpackJsonP',
-			library: [ 'itsec', '[module]', '[entry]' ],
-			libraryTarget: 'this',
+			chunkLoadingGlobal: 'itsecWebpackJsonP',
+			library: {
+				name: [ 'itsec', '[module]', '[entry]' ],
+				type: 'window',
+			},
 		},
 		externals: [
 			vendors.reduce(
@@ -114,7 +115,7 @@ module.exports = function makeConfig( directory, pro ) {
 				{}
 			),
 			...wpExternals,
-			function( context, request, callback ) {
+			function( { request }, callback ) {
 				if ( /^@ithemes\/security\./.test( request ) ) {
 					const parts = request.split( '.' );
 					const external = {
@@ -129,7 +130,6 @@ module.exports = function makeConfig( directory, pro ) {
 		],
 		module: {
 			rules: [
-				{ parser: { amd: false } },
 				{
 					test: /\.js$/,
 					exclude: /node_modules/,
@@ -159,21 +159,25 @@ module.exports = function makeConfig( directory, pro ) {
 						{
 							loader: 'postcss-loader',
 							options: {
-								plugins: [ autoprefixer ],
+								postcssOptions: {
+									plugins: [ autoprefixer ],
+								},
 							},
 						},
 						{
 							loader: 'sass-loader',
 							options: {
-								outputStyle: debug ? 'expanded' : 'compressed',
-								sourceMap: debug ? 'inline' : false,
-								data: '@import "config.scss";',
-								includePaths: [
-									path.resolve(
-										directory,
-										'./core/packages/style-guide/src'
-									),
-								],
+								additionalData: '@import "config.scss";',
+								sourceMap: debug,
+								sassOptions: {
+									outputStyle: debug ? 'expanded' : 'compressed',
+									includePaths: [
+										path.resolve(
+											directory,
+											'./core/packages/style-guide/src'
+										),
+									],
+								},
 							},
 						},
 					],
@@ -181,14 +185,32 @@ module.exports = function makeConfig( directory, pro ) {
 				{
 					test: /\.svg$/,
 					exclude: /node_modules/,
+					resourceQuery: { not: [ /inline/ ] },
 					use: [
 						{
-							loader: 'svg-react-loader',
-							query: {
-								classIdPrefix: 'itsec-icon-[name]-[hash:5]__',
+							loader: '@svgr/webpack',
+							options: {
+								svgoConfig: {
+									plugins: [
+										{
+											name: 'prefixIds',
+											params: {
+												prefix: 'itsec-icon-[name]-[hash:5]__',
+											},
+										},
+									],
+								},
 							},
 						},
 					],
+				},
+				{
+					resourceQuery: /inline/,
+					type: 'asset/inline',
+				},
+				{
+					test: /\.png/,
+					type: 'asset/resource',
 				},
 			],
 		},
@@ -196,9 +218,6 @@ module.exports = function makeConfig( directory, pro ) {
 			new LiveReloadPlugin(),
 			new MiniCssExtractPlugin( {
 				filename: ! useMinExt ? '[name].css' : '[name].min.css',
-			} ),
-			new FilterWarningsPlugin( {
-				exclude: /mini-css-extract-plugin[^]*Conflicting order between:/,
 			} ),
 			new StyleOnlyEntryPlugin(),
 			new DynamicPublicPath( 'itsecWebpackPublicPath' ),
@@ -214,11 +233,29 @@ module.exports = function makeConfig( directory, pro ) {
 					return parts[ 0 ];
 				},
 			} ),
-			new ManifestPlugin( {
+			new WebpackManifestPlugin( {
 				fileName: debug ? 'manifest-dev.php' : 'manifest.php',
 				generate: generateManifest,
 				serialize: serializeManifest,
 			} ),
+			{
+				apply: ( compiler ) => {
+					compiler.hooks.afterEmit.tap( 'TouchManifest', () => {
+						if ( debug ) {
+							return;
+						}
+
+						const time = new Date();
+						const file = path.join( directory, 'dist', 'manifest.php' );
+
+						try {
+							fs.utimesSync( file, time, time );
+						} catch ( err ) {
+							fs.closeSync( fs.openSync( file, 'w' ) );
+						}
+					} );
+				},
+			},
 			vendors.length > 0 &&
 				new CopyWebpackPlugin( {
 					patterns: vendors.flatMap( ( vendor ) => [
@@ -250,6 +287,10 @@ module.exports = function makeConfig( directory, pro ) {
 			alias: {
 				// Always load the same copy of @emotion/react to prevent issues with npm linking our UI library.
 				'@emotion/react': path.resolve( directory, './node_modules/@emotion/react' ),
+				'@ithemes/security-ui': path.resolve(
+					directory,
+					'./core/packages/ui/src/index.js'
+				),
 				'@ithemes/security-utils': path.resolve(
 					directory,
 					'./core/packages/utils/src/index.js'
@@ -274,6 +315,10 @@ module.exports = function makeConfig( directory, pro ) {
 					directory,
 					'./core/packages/rjsf-theme/src/index.js'
 				),
+				'@ithemes/security-schema-form': path.resolve(
+					directory,
+					'./core/packages/schema-form/src/index.js'
+				),
 				'@ithemes/security-search': path.resolve(
 					directory,
 					'./core/packages/search/src/index.js'
@@ -290,8 +335,6 @@ module.exports = function makeConfig( directory, pro ) {
 		},
 		optimization: {},
 	};
-
-	const splitChunkName = new SplitChunkName();
 
 	config.optimization.runtimeChunk = 'single';
 	config.optimization.splitChunks = {
@@ -310,12 +353,7 @@ module.exports = function makeConfig( directory, pro ) {
 				enforce: true,
 			},
 		},
-		name: splitChunkName.name.bind( splitChunkName ),
 	};
-
-	if ( ! debug ) {
-		config.plugins.push( new webpack.HashedModuleIdsPlugin() );
-	}
 
 	return config;
 };

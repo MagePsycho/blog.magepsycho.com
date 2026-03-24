@@ -119,9 +119,9 @@ class CustomSidebarsReplacer extends CustomSidebars {
 					$css_before = array_unique( $css_before );
 					echo '<style type="text/css" media="screen">';
 					echo PHP_EOL;
-					echo implode( PHP_EOL, $css_before );
+					CustomSidebars::wp_kses_wf(implode( PHP_EOL, $css_before ));
 					echo PHP_EOL;
-					echo $css;
+					CustomSidebars::wp_kses_wf( $css );
 					echo '</style>';
 					echo PHP_EOL;
 

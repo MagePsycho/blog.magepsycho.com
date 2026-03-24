@@ -34,6 +34,13 @@ export function* selectSiteType( id ) {
 	yield resetOnboarding();
 }
 
+export function* fetchSiteTypes() {
+	const siteTypes = yield apiFetch( {
+		path: '/ithemes-security/v1/site-types',
+	} );
+	yield receiveSiteTypes( siteTypes );
+}
+
 export function clearSiteType() {
 	return { type: CLEAR_SITE_TYPE };
 }
@@ -89,14 +96,37 @@ export function* repeatQuestion() {
 
 export function* applyAnswerResponse() {
 	const answers = yield controls.select( STORE_NAME, 'getAnswers' );
+	const modules = yield controls.resolveSelect( MODULES_STORE_NAME, 'getModules' );
 
 	for ( const answer of answers ) {
 		for ( const module of answer.modules ) {
-			yield controls.dispatch( MODULES_STORE_NAME, 'editModule', module, {
-				status: {
-					selected: 'active',
-				},
-			} );
+			const config = modules.find( ( { id } ) => id === module );
+
+			if ( config?.side_effects ) {
+				yield controls.dispatch( MODULES_STORE_NAME, 'activateModule', module );
+				yield controls.dispatch( STORE_NAME, 'fetchSiteTypes' );
+			} else {
+				yield controls.dispatch( MODULES_STORE_NAME, 'editModule', module, {
+					status: {
+						selected: 'active',
+					},
+				} );
+			}
+		}
+
+		for ( const module of answer.disabled ) {
+			const config = modules.find( ( { id } ) => id === module );
+
+			if ( config?.side_effects ) {
+				yield controls.dispatch( MODULES_STORE_NAME, 'deactivateModule', module );
+				yield controls.dispatch( STORE_NAME, 'fetchSiteTypes' );
+			} else {
+				yield controls.dispatch( MODULES_STORE_NAME, 'editModule', module, {
+					status: {
+						selected: 'inactive',
+					},
+				} );
+			}
 		}
 
 		for ( const module in answer.settings ) {
@@ -203,7 +233,6 @@ export function registerCompletionStep( {
 	id,
 	label,
 	priority,
-	render,
 	callback,
 	activeCallback,
 } ) {
@@ -212,7 +241,6 @@ export function registerCompletionStep( {
 		id,
 		label,
 		priority,
-		render,
 		callback,
 		activeCallback,
 	};

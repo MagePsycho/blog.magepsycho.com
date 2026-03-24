@@ -65,7 +65,7 @@ class Autoterms_List extends WP_List_Table
         $columns = [
             'title'     => __('Title', 'simple-tags'),
             'taxonomy'  => __('Taxonomy', 'simple-tags'),
-            'post_types'  => __('Auto term Post type', 'simple-tags'),
+            'post_types'  => __('Post Type', 'simple-tags'),
             'source'  => __('Source', 'simple-tags')
         ];
 
@@ -276,6 +276,7 @@ class Autoterms_List extends WP_List_Table
             ),
         ];
 
+        $actions = apply_filters('taxopress_autoterm_row_actions', $actions, $item);
         return $column_name === $primary ? $this->row_actions($actions, false) : '';
     }
 
@@ -374,12 +375,20 @@ class Autoterms_List extends WP_List_Table
             $used_source[] = esc_html__('Existing taxonomy terms', 'simple-tags');
         }
         
+        if(isset($item['autoterm_use_open_ai']) && !empty(taxopress_disp_boolean($item['autoterm_use_open_ai']))) {
+            $used_source[] = esc_html__('OpenAI', 'simple-tags');
+        }
+        
+        if(isset($item['autoterm_use_ibm_watson']) && !empty(taxopress_disp_boolean($item['autoterm_use_ibm_watson']))) {
+            $used_source[] = esc_html__('IBM Watson', 'simple-tags');
+        }
+        
         if(isset($item['autoterm_use_dandelion']) && !empty(taxopress_disp_boolean($item['autoterm_use_dandelion']))) {
             $used_source[] = esc_html__('Dandelion', 'simple-tags');
         }
         
         if(isset($item['autoterm_use_opencalais']) && !empty(taxopress_disp_boolean($item['autoterm_use_opencalais']))) {
-            $used_source[] = esc_html__('Open Calais', 'simple-tags');
+            $used_source[] = esc_html__('LSEG / Refinitiv', 'simple-tags');
         }
 
         return join(', ', $used_source);

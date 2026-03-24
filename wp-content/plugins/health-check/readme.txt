@@ -1,10 +1,10 @@
 === Health Check & Troubleshooting ===
 Tags: health check
 Contributors: wordpressdotorg, westi, pento, Clorith
-Requires at least: 4.0
-Requires PHP: 5.2
-Tested up to: 5.8
-Stable tag: 1.4.5
+Requires at least: 4.4
+Requires PHP: 5.6
+Tested up to: 6.6
+Stable tag: 1.7.1
 License: GPLv2
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,6 +40,13 @@ Tools that check for PHP compatibility do not know how to separate this code fro
 
 At this time, the plugin has been tested with every version of PHP from 5.2 through 7.3, and works with all of these.
 
+= Where can I report security bugs? =
+
+The Site Health team and WordPress community take security bugs seriously. We appreciate your efforts to responsibly disclose your findings, and will make every effort to acknowledge your contributions.
+
+To report a security issue, please visit the [WordPress HackerOne](https://hackerone.com/wordpress) program.
+
+
 == Screenshots ==
 
 1. The health check screen after the automated tests have gone over the system.
@@ -49,49 +56,27 @@ At this time, the plugin has been tested with every version of PHP from 5.2 thro
 
 == Changelog ==
 
-= v1.4.5 =
-* Fix Troubleshooting Mode throwing errors in frontend on WordPress 5.5
+= 1.7.1 (2024-07-25) =
+* Security: Prevent a potential information disclosure from the screenshot beta feature, reported independently by Jarko Piironen.
+* Security hardening: Make each screenshot delete nonce unique to that image.
+* Security hardening: Add a capability check alongside the nonce validation when toggling beta features on or off.
+* General: Updated the `Tested up to` tag.
+* General: Added notice about future changes to the Troubleshooting and Tools sections.
+* Added Twenty Twenty Four as a known and valid default theme.
+* Tools: Fixed a PHP warning when checking for PHP version compatibility and no data was found.
+* Tools: Fixed a PHP warning when `WP_DEBUG` is disabled, or nothing has been written to the logfile yet.
+* Tools: Improved the description for the `robots.txt` file viewer.
 
-= v1.4.4 =
-* Fixed hidden JavaScript warning when using troubleshooting mode on the Dashboard
-* Fixed plugin and theme lists staying hidden in troubleshooting mode on the Dashboard
-
-= v1.4.3 =
-* Compatibility with WordPress 5.4
-
-= v1.4.2 =
-* Fix missing headers for a loopback request in the debug section
-
-= v1.4.1 =
-* Fixed SQL version checks for various MariaDB installs.
-* Fixed a warning being generated in logfiles for first-time users with no existing Site Health history.
-* Added missing translation function for the new PHP compatibility tool.
-
-= v1.4.0 =
-* Fix a bug when viewing the Site Health page if enabling the Health Check plugin in troubleshooting mode.
-* Fix an inconsistency with how database versions are checked.
-* Fix the file comparison view on Windows systems if there are modified core files.
-* Fix a bug where some premium plugins could not be enabled in troubleshooting mode
-* Improved styles for older browsers.
-* Improved the PHP module checks to allow for constant checks as well. Should help with some edge case tests.
-* Improved the core file integrity checker.
-* Improved testing of WP_cron, now works properly for those running a "real cron" outside of WordPress.
-* Improved the htaccess rule test to only run if using an Apache server that supports these.
-* Modify the Site Health grading indicator.
-* Modified strings to make them clearer.
-* Added server headers to the Debug information.
-* Added polyfills for core features from WordPress 5.2 so they work for older sites.
-* Added a link to the Site Health page from the plugin overview.
-* Added a custom capability, `view_site_health_checks` for the plugin.
-* Added support for parent/child theme output in the Debug screen.
-* Added system user information to the Debug information.
-* Added a Site Health test for timezone localization.
-* Added `mbstring` and `json` (again) as requirements to the list of PHP extensions.
-* Added a missing toggle to the list of plugins/themes to the troubleshooting dashboard widget.
-* Added bulk actions to enable or disable plugins when troubleshooting, or to initiate troubleshooting mode.
-* Added plugin compatibility checker ot the tools section.
-* Added a dashboard widget to show your Site Health status at a glance when logging in.
-* Added filters for Site Health test results.
-* Added WP-CLI support, you can now run `wp health-check status` for a list of test and their status.
-* Moved compatibility functions out of primary files and into a `compat.php` so they can be conditionally loaded.
-* Disable the Fatal Error (WSOD) protection in WordPress while in troubleshooting mode.
+= 1.7.0 (2023-08-06) =
+* General: Improved styling inconsistency between the plugin and WordPress core.
+* General: Fixed an issue with plugin translations where language strings would get mixed when using third party language plugins, or a separate profile language.
+* Troubleshooting Mode: Fixed the URL used when disabling elements and having a subdirectory installation.
+* Troubleshooting Mode: Fixed a deprecation warning when disabling troubleshooting mode on PHP version 8.3 or higher.
+* Troubleshooting Mode: Added reference on how to troubleshoot as different users when testing scenarios.
+* Tools: Fixed integration with WPTide for the PHP Compatibility checker.
+* Tools: Added a viewer that will display debug log output when enabled.
+* Tools: Added a warning to the File Integrity tester if unexpected files are mixed in with WordPress core files.
+* Tools: Added a warning if sending emails is taking longer than expected.
+* Tools: Added beta feature toggle for those who wish to test new functionality that may not be fully ready yet.
+* CLI: Fixed the CLI commands, you can now `wp health-check status` to your hearts content!
+* Beta feature: Added a new beta feature, making it easier for non-technical users to grab screenshots of issues on their site, and share them.

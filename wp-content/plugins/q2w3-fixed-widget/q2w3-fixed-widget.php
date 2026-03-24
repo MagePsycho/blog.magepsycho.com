@@ -1,13 +1,13 @@
 <?php
-/*
-Plugin Name: Fixed Widget
-Plugin URI: https://wpadvancedads.com/fixed-widget-wordpress/
-Description: Use the fixed widget plugin to create sticky widgets that stay in the visible screen area when the page is scrolled up or down and boost your conversions.
-Text Domain: q2w3-fixed-widget
-Author: Thomas Maier, Max Bond
-Version: 6.0.7
-Author URI: https://wpadvancedads.com/fixed-widget-wordpress/
-*/
+/**
+ * Plugin Name: Fixed Widget
+ * Plugin URI: https://wpadvancedads.com/fixed-widget-wordpress/
+ * Description: Use the fixed widget plugin to create sticky widgets that stay in the visible screen area when the page is scrolled up or down and boost your conversions.
+ * Text Domain: q2w3-fixed-widget
+ * Author: Advanced Ads
+ * Version: 6.2.3
+ * Author URI: https://wpadvancedads.com/fixed-widget-wordpress
+ **/
 
 add_action( 'init', array( 'q2w3_fixed_widget', 'init' ) ); // Main Hook
 
@@ -23,7 +23,7 @@ class q2w3_fixed_widget {
 
 	const ID = 'q2w3_fixed_widget';
 
-	const VERSION = '6.0.7';
+	const VERSION = '6.2.3';
 
 	protected static $sidebars_widgets;
 
@@ -290,7 +290,7 @@ class q2w3_fixed_widget {
 	public static function admin_menu() {
 		remove_action( 'admin_menu', array( 'q2w3_fixed_widget', 'admin_menu' ) ); // Remove free version plugin
 
-		self::$settings_page_hook = add_submenu_page( 'themes.php', esc_html__( 'Fixed Widget Options', 'q2w3-fixed-widget' ), esc_html__( 'Fixed Widget Options', 'q2w3-fixed-widget' ), 'activate_plugins', self::ID, array( __CLASS__, 'settings_page' ) );
+		self::$settings_page_hook = add_submenu_page( 'themes.php', esc_html__( 'Fixed Widget', 'q2w3-fixed-widget' ), esc_html__( 'Fixed Widget', 'q2w3-fixed-widget' ), 'activate_plugins', self::ID, array( __CLASS__, 'settings_page' ) );
 	}
 
 	/**
@@ -388,7 +388,7 @@ class q2w3_fixed_widget {
 
 		$options = self::load_options();
 
-		echo '<div class="wrap"><div id="icon-themes" class="icon32"><br /></div><h2>' . esc_html__( 'Fixed Widget Options', 'q2w3-fixed-widget' ) . '</h2>' . PHP_EOL;
+		echo '<div class="wrap"><div id="icon-themes" class="icon32"><br /></div><h2>' . esc_html__( 'Fixed Widget', 'q2w3-fixed-widget' ) . '</h2>' . PHP_EOL;
 
 		if ( isset( $_GET['settings-updated'] ) && $_GET['settings-updated'] == 'true' ) {
 			echo '<div id="message" class="updated"><p>' . esc_html__( 'Settings saved.', 'q2w3-fixed-widget' ) . '</p></div>' . PHP_EOL;
@@ -428,11 +428,13 @@ class q2w3_fixed_widget {
 	 */
 	public static function settings_page_general_box( $options ) {
 		echo '<p>
-			<span style="display: inline-block; width: 150px;">' . esc_html__( 'Test new version', 'q2w3-fixed-widget' ) . '</span>
-			<input type="checkbox" name="' . esc_attr( self::ID ) . '[use_sticky_position]" value="yes" ' . checked( 'yes', $options['use_sticky_position'], false ) . ' /> </p>' . PHP_EOL;
-		echo '<p style="font-weight: bold;">';
-		esc_html_e( 'Use our completely updated script which takes care of common issues and a bad Web Vitals score caused by layout shifts. This version is rolled out to all users in the near future.', 'q2w3-fixed-widget' );
-		echo '<br/>';
+			<span style="display: inline-block; width: 150px;">' . esc_html__( 'Improved version', 'q2w3-fixed-widget' ) . '</span>
+			<input type="checkbox" name="' . esc_attr( self::ID ) . '[use_sticky_position]" value="yes" ' . checked( 'yes', $options['use_sticky_position'], false ) . ' /></p>' . PHP_EOL;
+		echo '<p>';
+		esc_html_e( 'Enable this option to use the completely updated script. It takes care of common issues and layout shifts.', 'q2w3-fixed-widget' );
+		echo ' ';
+		esc_html_e( 'The improved script works best with themes that support flexbox instead of float.', 'q2w3-fixed-widget' );
+		echo ' ';
 		printf(
 			wp_kses(
 				// translators: %1$s is an opening a tag, %2ds is a closing one

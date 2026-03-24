@@ -42,7 +42,6 @@
  *     specific to that link shortening API.
  *
  * @since 4.0.0 | 19 JUL 2019 | Created
- *
  */
 class SWP_Link_Shortener {
 
@@ -52,7 +51,6 @@ class SWP_Link_Shortener {
 	 *
 	 * debug()  Outputs all class properties to the screen.
 	 * record_exit_status()  Stores bail conditions a dumpable array.
-	 *
 	 */
 	use SWP_Debug_Trait;
 
@@ -62,7 +60,6 @@ class SWP_Link_Shortener {
 	 * class. Keys should be snake_cased.
 	 *
 	 * @var string
-	 *
 	 */
 	public $key;
 
@@ -72,7 +69,6 @@ class SWP_Link_Shortener {
 	 * name to the screen for the users to see.
 	 *
 	 * @var string
-	 *
 	 */
 	public $name;
 
@@ -83,7 +79,6 @@ class SWP_Link_Shortener {
 	 * have an Access Token.
 	 *
 	 * @var boolean
-	 *
 	 */
 	public $active = false;
 
@@ -99,7 +94,6 @@ class SWP_Link_Shortener {
 	 * link: The URL to which the button should link.
 	 *
 	 * @var array
-	 *
 	 */
 	public $button_properties = array();
 
@@ -111,7 +105,6 @@ class SWP_Link_Shortener {
 	 * credentials from the plugin.
 	 *
 	 * @var string
-	 *
 	 */
 	public $deactivation_hook = '';
 
@@ -125,7 +118,6 @@ class SWP_Link_Shortener {
 	 * @since  4.0.0 | 19 JUL 2019 | Created
 	 * @param  void
 	 * @return void
-	 *
 	 */
 	public function __construct() {
 		$this->establish_button_properties();
@@ -133,12 +125,12 @@ class SWP_Link_Shortener {
 		add_action( 'wp_footer', array( $this, 'debug' ) );
 		add_filter( 'swp_link_shortening', array( $this, 'provide_shortlink' ) );
 
-		if( !empty( $this->deactivation_hook ) ) {
-			add_action( 'wp_ajax_nopriv_swp_' . $this->activation_hook, array( $this , $this->activation_hook ) );
+		if ( ! empty( $this->deactivation_hook ) ) {
+			add_action( 'wp_ajax_nopriv_swp_' . $this->activation_hook, array( $this, $this->activation_hook ) );
 		}
 
-		if( !empty( $this->deactivation_hook ) ) {
-			add_action( 'wp_ajax_swp_' .$this->deactivation_hook, array( $this, $this->deactivation_hook ) );
+		if ( ! empty( $this->deactivation_hook ) ) {
+			add_action( 'wp_ajax_swp_' . $this->deactivation_hook, array( $this, $this->deactivation_hook ) );
 		}
 	}
 
@@ -149,13 +141,12 @@ class SWP_Link_Shortener {
 	 * an option on the options page.
 	 *
 	 * @since  4.0.0 | 18 JUL 2019 | Created
-	 * @param  array $array An array of link shortening integrations.
+	 * @param  array $link_array An array of link shortening integrations.
 	 * @return array        The modified array with our integration added.
-	 *
 	 */
-	public function register_self( $array ) {
-		$array[$this->key] = $this;
-		return $array;
+	public function register_self( $link_array ) {
+		$link_array[ $this->key ] = $this;
+		return $link_array;
 	}
 
 
@@ -166,17 +157,16 @@ class SWP_Link_Shortener {
 	 * @since  4.0.0 | 18 JUL 2019 | Created
 	 * @param  void
 	 * @return void All date will be stored in the local $button_properties property.
-	 *
 	 */
 	public function establish_button_properties() {
-		if ( true == $this->active ) {
-			$this->button_properties['text']              = __( 'Connected', 'social-warfare' );
+		if ( true === $this->active ) {
+			$this->button_properties['text']              = esc_html__( 'Connected', 'social-warfare' );
 			$this->button_properties['classes']           = 'button sw-green-button';
 			$this->button_properties['new_tab']           = true;
 			$this->button_properties['link']              = '#';
 			$this->button_properties['deactivation_hook'] = $this->deactivation_hook;
 		} else {
-			$this->button_properties['text']              = __( 'Authenticate', 'social-warfare' );
+			$this->button_properties['text']              = esc_html__( 'Authenticate', 'social-warfare' );
 			$this->button_properties['classes']           = 'button sw-navy-button';
 			$this->button_properties['new_tab']           = false;
 			$this->button_properties['link']              = $this->authorization_link;
@@ -196,33 +186,27 @@ class SWP_Link_Shortener {
 	 * @since  3.4.0 | 16 OCT 2018 | Modified order of conditionals, docblocked.
 	 * @since  4.0.0 | 17 JUL 2019 | Migrated into this standalone Bitly class.
 	 * @since  4.0.0 | 23 JUL 2019 | Migrated into the parent Link_Shortener class.
-	 * @param  array $array An array of arguments and information passed by the filter hook.
-	 * @return array $array The modified array.
-	 *
+	 * @param  array $arg_array An array of arguments and information passed by the filter hook.
+	 * @return array $arg_array The modified array.
 	 */
-	public function provide_shortlink( $array ) {
-
+	public function provide_shortlink( $arg_array ) {
 
 		/**
 		 * Pull together the information that we'll need to generate bitly links.
-		 *
 		 */
 		global $post;
-		$network           = $array['network'];
-		$post_id           = $array['post_id'];
-		$fresh_cache       = $array['fresh_cache'];
-		$google_analytics  = SWP_Utility::get_option('google_analytics');
-
+		$network          = $arg_array['network'];
+		$post_id          = $arg_array['post_id'];
+		$fresh_cache      = $arg_array['fresh_cache'];
+		$google_analytics = SWP_Utility::get_option( 'google_analytics' );
 
 		/**
 		 * Check if any of the bail conditions are met, in which case we'll exit
 		 * the function without returning any kind of shortlinks.
-		 *
 		 */
-		if( false === $this->should_link_be_shortened( $network ) ) {
-			return $array;
+		if ( false === $this->should_link_be_shortened( $network ) ) {
+			return $arg_array;
 		}
-
 
 		/**
 		 * If the chache is fresh and we have a valid bitly link stored in the
@@ -231,31 +215,26 @@ class SWP_Link_Shortener {
 		 * If the cache is fresh and we don't have a valid bitly link, we just
 		 * return the unmodified array. This will prevent it from running non-stop
 		 * API requests if one failed.
-		 *
 		 */
-		if ( true == $fresh_cache ) {
+		if ( true === $fresh_cache ) {
 			$this->record_exit_status( 'fresh_cache' );
-			if( $this->fetch_cached_shortlink( $post_id, $network ) ) {
-				$array['url'] = $this->fetch_cached_shortlink( $post_id, $network );
+			if ( $this->fetch_cached_shortlink( $post_id, $network ) ) {
+				$arg_array['url'] = $this->fetch_cached_shortlink( $post_id, $network );
 			}
-			return $array;
+			return $arg_array;
 		}
-
 
 		/**
 		 * If all checks have passed, let's generate a new bitly URL. If an
 		 * existing link exists for the link passed to the API, it won't generate
 		 * a new one, but will instead return the existing one.
-		 *
 		 */
-		$url           = urldecode( $array['url'] );
+		$url           = urldecode( $arg_array['url'] );
 		$new_shortlink = $this->generate_new_shortlink( $url, $post_id, $network );
-
 
 		/**
 		 * If a link was successfully created, let's store it in the database,
 		 * let's store it in the url indice of the array, and then let's wrap up.
-		 *
 		 */
 		if ( $new_shortlink ) {
 			$meta_key = $this->key . '_link';
@@ -266,10 +245,10 @@ class SWP_Link_Shortener {
 
 			delete_post_meta( $post_id, $meta_key );
 			update_post_meta( $post_id, $meta_key, $new_shortlink );
-			$array['url'] = $new_shortlink;
+			$arg_array['url'] = $new_shortlink;
 		}
 
-		return $array;
+		return $arg_array;
 	}
 
 
@@ -280,82 +259,68 @@ class SWP_Link_Shortener {
 	 * @since  4.0.0 | 23 JUL 2019 | Created
 	 * @param  string $network The key corresponding to a social network.
 	 * @return bool   True if cleared to continue; false if we should bail.
-	 *
 	 */
 	public function should_link_be_shortened( $network ) {
 		global $post;
-
 
 		/**
 		 * We don't want bitly links generated for the total shares buttons
 		 * (since they don't have any links at all), and Pinterest doesn't allow
 		 * shortlinks on their network.
-		 *
 		 */
-		if ( 'total_shares' == $network || 'pinterest' == $network ) {
+		if ( 'total_shares' === $network || 'pinterest' === $network ) {
 			return false;
 		}
-
 
 		/**
 		 * Bail if link shortening is turned off.
-		 *
 		 */
-		if( false == SWP_Utility::get_option( 'link_shortening_toggle' ) ) {
+		if ( false === SWP_Utility::get_option( 'link_shortening_toggle' ) ) {
 			$this->record_exit_status( 'link_shortening_toggle' );
 			return false;
 		}
-
 
 		/**
 		 * This checks if the user has selected the current link shortener as
 		 * their service of choice. For example, if the Bitly class is calling
 		 * this, but the option is set to something other than Bitly, it will
 		 * bail out here.
-		 *
 		 */
-		if( $this->key !== SWP_Utility::get_option( 'link_shortening_service' ) ) {
+		if ( SWP_Utility::get_option( 'link_shortening_service' ) !== $this->key ) {
 			$this->record_exit_status( 'link_shortening_service' );
 			return false;
 		}
-
 
 		/**
 		 * Bail if this link shortener isn't active. This property will be set
 		 * in the child class and will be determined based on the conditions of
 		 * that shortener. For example, the Bitly child class check to see if
 		 * the Access Token is set, and if it does it sets this property to true.
-		 *
 		 */
-		if ( false == $this->active ) {
+		if ( false === $this->active ) {
 			$this->record_exit_status( 'authentication' );
 			return false;
 		}
 
-
 		/**
 		 * Bail out if the post is older than the specified minimum publication
 		 * date for posts and pages.
-		 *
 		 */
-		if ( false == $this->check_publication_date() ) {
+		if ( false === $this->check_publication_date() ) {
 			$this->record_exit_status( 'publication_date' );
 			return false;
 		}
-
 
 		/**
 		 * Shortlinks can now be turned on or off at the post_type level on the
 		 * options page. So if the shortlinks are turned off for our current
 		 * post type, let's bail
-		 *
 		 */
 		$post_type_toggle = SWP_Utility::get_option( 'short_link_toggle_' . $post->post_type );
 		if ( false === $post_type_toggle ) {
 			$this->record_exit_status( 'short_link_toggle_' . $post->post_type );
 			return false;
 		}
-
 
 		// If all checks pass, return true. We should shorten the link.
 		return true;
@@ -371,39 +336,32 @@ class SWP_Link_Shortener {
 	 * @since  3.3.2 | 12 SEP 2018 | Created
 	 * @since  3.4.0 | 16 OCT 2018 | Refactored, Simplified, Docblocked.
 	 * @since  4.0.0 | 23 JUL 2019 | Moved into this parent class.
-	 * @param  int $post_id The post ID
+	 * @param  int    $post_id The post ID
 	 * @param  string $network The key for the current social network
 	 * @return mixed           string: The short url; false on failure.
-	 *
 	 */
 	public function fetch_cached_shortlink( $post_id, $network ) {
-
 
 		/**
 		 * Fetch the local bitly link. We'll use this one if Google Analytics is
 		 * not enabled. Otherwise we'll switch it out below.
-		 *
 		 */
 		$short_url = get_post_meta( $post_id, $this->key . '_link', true );
-
 
 		/**
 		 * If Google analytics are enabled, we'll need to fetch a different
 		 * shortlink for each social network. If they are disabled, we just use
 		 * the same shortlink for all of them.
-		 *
 		 */
-		if ( true == SWP_Utility::get_option('google_analytics') ) {
-			$short_url = get_post_meta( $post_id, $this->key . '_link_' . $network, true);
+		if ( true === SWP_Utility::get_option( 'google_analytics' ) ) {
+			$short_url = get_post_meta( $post_id, $this->key . '_link_' . $network, true );
 		}
-
 
 		/**
 		 * We need to make sure that the $short_url returned from get_post_meta()
 		 * is not false or an empty string. If so, we'll return false.
-		 *
 		 */
-		if ( !empty( $short_url ) ) {
+		if ( ! empty( $short_url ) ) {
 			return $short_url;
 		}
 
@@ -421,7 +379,6 @@ class SWP_Link_Shortener {
 	 * @since  4.0.0 | 23 JUL 2019 | Created
 	 * @param  void
 	 * @return bool True if publication date is valid; false if not.
-	 *
 	 */
 	public function check_publication_date() {
 		global $post;
@@ -433,7 +390,7 @@ class SWP_Link_Shortener {
 		if ( $start_date ) {
 
 			// Bail if we don't have a valid post object or post_date.
-			if ( !is_object( $post ) || empty( $post->post_date ) ) {
+			if ( ! is_object( $post ) || empty( $post->post_date ) ) {
 				return false;
 			}
 

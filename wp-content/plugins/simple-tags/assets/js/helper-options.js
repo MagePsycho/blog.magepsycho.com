@@ -8,12 +8,27 @@ jQuery(document).ready(function() {
     if (typeof(localStorage) != 'undefined' && localStorage != null) {
         activetab = localStorage.getItem("activetab");
     }
+
+    // Check if current tab is accessible
+    if (activetab && !jQuery(activetab + '-tab').is(':visible')) {
+        // Switch to first available tab if current tab is hidden
+        activetab = jQuery('.nav-tab-wrapper a:visible:first').attr('href');
+        if (typeof(localStorage) != 'undefined' && localStorage != null) {
+            localStorage.setItem("activetab", activetab);
+        }
+    }
+
+    // allow default tab from parameter
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('active_tab')) {
+        activetab = '#' + urlParams.get('active_tab');
+    }
+    
     if (activetab !== '' && jQuery(activetab).length) {
         jQuery(activetab).fadeIn();
     } else {
         jQuery('.group:first').fadeIn();
     }
-    //console.log(activetab);
 
     if (activetab !== '' && jQuery(activetab + '-tab').length) {
         jQuery(activetab + '-tab').addClass('nav-tab-active');

@@ -276,6 +276,7 @@ class Autolinks_List extends WP_List_Table
             ),
         ];
 
+        $actions = apply_filters('taxopress_autolink_row_actions', $actions, $item);
         return $column_name === $primary ? $this->row_actions($actions, false) : '';
     }
 
@@ -387,7 +388,7 @@ class Autolinks_List extends WP_List_Table
     protected function column_shortcode($item)
     {
 
-        return '<input type="text" value=\'[taxopress_autolinks id="' . $item['ID'] . '"]\' />';
+        return '<input readonly type="text" value=\'[taxopress_autolinks id="' . $item['ID'] . '"]\' />';
     }
 
 

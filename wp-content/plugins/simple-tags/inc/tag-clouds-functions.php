@@ -144,23 +144,27 @@ function taxopress_create_default_tag_cloud()
     }
 
     $default = [];
-    $default['taxopress_tag_cloud']['title'] = 'Terms Display';
+    $default['taxopress_tag_cloud']['title'] = esc_html__('Terms Display', 'simple-tags');
     $default['taxopress_tag_cloud']['post_type'] = '';
+    $default['taxopress_tag_cloud']['before']   = '';
+    $default['taxopress_tag_cloud']['after']    = '';
     $default['taxopress_tag_cloud']['taxonomy'] = 'post_tag';
-    $default['taxopress_tag_cloud']['max'] = 45;
+    $default['taxopress_tag_cloud']['max'] = 20;
     $default['taxopress_tag_cloud']['selectionby'] = 'count';
     $default['taxopress_tag_cloud']['selection'] = 'desc';
     $default['taxopress_tag_cloud']['orderby'] = 'random';
     $default['taxopress_tag_cloud']['order'] = 'desc';
-    $default['taxopress_tag_cloud']['smallest'] = 8;
-    $default['taxopress_tag_cloud']['largest'] = 22;
+    $default['taxopress_tag_cloud']['smallest'] = 12;
+    $default['taxopress_tag_cloud']['largest'] = 12;
     $default['taxopress_tag_cloud']['unit'] = 'pt';
-    $default['taxopress_tag_cloud']['format'] = 'flat';
+    $default['taxopress_tag_cloud']['format'] = 'border';
     $default['taxopress_tag_cloud']['color'] = 1;
-    $default['taxopress_tag_cloud']['mincolor'] = '#CCCCCC';
+    $default['taxopress_tag_cloud']['mincolor'] = '#353535';
     $default['taxopress_tag_cloud']['maxcolor'] = '#000000';
     $default['taxopress_tag_cloud']['xformat'] = '<a href="%tag_link%" id="tag-link-%tag_id%" class="st-tags t%tag_scale%" title="%tag_count% topics" %tag_rel% style="%tag_size% %tag_color%">%tag_name%</a>';
     $default['taxopress_tag_cloud']['limit_days'] = 0;
+    $default['taxopress_tag_cloud']['term_selection_mode'] = 'automatic';
+    $default['taxopress_tag_cloud']['include_terms'] = '';
     $default['tagcloud_submit'] = 'Add Terms Display';
     $default['cpt_tax_status'] = 'new';
     $result = taxopress_update_tagcloud($default);
@@ -179,14 +183,23 @@ function taxopress_create_default_tag_cloud()
  */
 function taxopress_update_tagcloud($data = [])
 {
+    $sanitized_data = [];
     foreach ($data as $key => $value) {
-
-        if (is_string($value)) {
-            $data[$key] = sanitize_text_field($value);
+        if (!is_array($value)) {
+            $sanitized_data[$key] = taxopress_sanitize_text_field($value);
         } else {
-            array_map('sanitize_text_field', $data[$key]);
+            $new_value = [];
+            foreach ($data[$key] as $option_key => $option_value) {
+                if ($option_key === 'xformat') {
+                    $new_value[$option_key] = taxopress_sanitize_text_field($option_value);
+                } else {
+                    $new_value[$option_key] = taxopress_sanitize_text_field($option_value);
+                }
+            }
+            $sanitized_data[$key] = $new_value;
         }
     }
+    $data = $sanitized_data;
 
     $tagclouds          = taxopress_get_tagcloud_data();
 
@@ -325,6 +338,9 @@ function taxopress_termsdisplay_shortcode($atts)
         ob_start();
         if (array_key_exists($tagcloud_id, $tagclouds)) {
             $tagclouds[$tagcloud_id]['number'] = $tagclouds[$tagcloud_id]['max'];
+            if (!isset($tagclouds[$tagcloud_id]['color'])) {
+                $tagclouds[$tagcloud_id]['color'] = 'false';
+            }
             $tagcloud_arg = build_query($tagclouds[$tagcloud_id]);
             // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
             echo SimpleTags_Client_TagCloud::extendedTagCloud( $tagcloud_arg );
@@ -336,4 +352,3 @@ function taxopress_termsdisplay_shortcode($atts)
 
 
     }
-?>

@@ -23,21 +23,61 @@ class AIOWPSecurity_WP_Loaded_Tasks {
 			add_action('login_init', array($this, 'aiowps_login_init'));
 		}
 
-		//For site lockout feature (ie, maintenance mode). It needs to be checked after the rename login page
-		if ($aio_wp_security->configs->get_value('aiowps_site_lockout') == '1') {
-			if (!is_user_logged_in()) {
-				//now check if user trying to reach login pages
-				if (!in_array($GLOBALS['pagenow'], array('wp-login.php'))) {
-					self::site_lockout_tasks();
-				}
-			} elseif (is_user_logged_in() && !current_user_can('manage_options') && !is_admin() && !in_array($GLOBALS['pagenow'], array('wp-login.php'))) {
-				self::site_lockout_tasks();
-			}
-		}
+		$this->do_lockout_tasks();
+
 		do_action('aiowps_wp_loaded_tasks_end', $this);
 
 	}
 
+	/**
+	 * Perform lockout task if it is applicable.
+	 *
+	 * @return void
+	 */
+	private function do_lockout_tasks() {
+		global $aio_wp_security;
+
+		if (1 != $aio_wp_security->configs->get_value('aiowps_site_lockout')) {
+			return;
+		}
+
+		if ('admin-ajax.php' == $GLOBALS['pagenow']) {
+			return;
+		}
+		
+		// Show login screen to all non-logged in users.
+		if ('wp-login.php' == $GLOBALS['pagenow']) {
+			return;
+		}
+		
+		// WP CLI and cronjob do not required site lockout.
+		if ((defined('DOING_CRON') && DOING_CRON) || 'cli' == PHP_SAPI) {
+			return;
+		}
+
+		// The lockout message should not be displayed to an administrator user.
+		if (is_user_logged_in() && current_user_can('manage_options')) {
+			return;
+		}
+		
+		// Non administrator users to lockout accessing admin area.
+		if (is_user_logged_in() && !current_user_can('manage_options') && is_admin()) {
+			wp_redirect(home_url());
+		}
+		
+		// Non-logged in users try access admin area, redirect to login page.
+		if (is_admin()) {
+			return;
+		}
+		
+		self::site_lockout_tasks();
+	}
+
+	/**
+	 * Render lockout output.
+	 *
+	 * @return void
+	 */
 	public static function site_lockout_tasks() {
 		$lockout_output = apply_filters('aiowps_site_lockout_output', '');
 		if (empty($lockout_output)) {
@@ -47,7 +87,7 @@ class AIOWPSecurity_WP_Loaded_Tasks {
 			$template = apply_filters('aiowps_site_lockout_template_include', AIO_WP_SECURITY_PATH . '/other-includes/wp-security-visitor-lockout-page.php');
 			include_once($template);
 		} else {
-			echo $lockout_output;
+			echo wp_kses_post($lockout_output);
 		}
 
 		exit();
@@ -58,8 +98,12 @@ class AIOWPSecurity_WP_Loaded_Tasks {
 		//this will prevent issues such as the following:
 		//https://wordpress.org/support/topic/already-logged-in-no-captcha
 		if (is_user_logged_in()) {
-			wp_redirect(admin_url());
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended --  PCP warning. No nonce.
+			$redirect_to = (isset($_REQUEST['redirect_to'])) ? sanitize_text_field(wp_unslash($_REQUEST['redirect_to'])) : admin_url();
+			wp_safe_redirect($redirect_to);
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended --  PCP warning. No nonce.
+		} elseif (!(isset($_GET['action']) && 'postpass' == $_GET['action'])) {
+			AIOWPSecurity_Utility_IP::check_login_whitelist_and_forbid();
 		}
 	}
-
 }

@@ -1,50 +1,67 @@
 <?php
-defined( 'ABSPATH' ) || die( 'Cheatin&#8217; uh?' );
+
+defined( 'ABSPATH' ) || exit;
 
 /**
- * Used to flush the .htaccess file
+ * Used to flush the .htaccess file.
  *
- * @since 1.1.0 Remove empty spacings when .htaccess is generated
  * @since 1.0
+ * @since 1.1.0 Remove empty spacings when .htaccess is generated.
  *
- * @param bool $force (default: false).
- * @return void
+ * @param  bool $remove_rules True to remove WPR rules, false to renew them. Default is false.
+ * @return bool               True on success, false otherwise.
  */
-function flush_rocket_htaccess( $force = false ) {
+function flush_rocket_htaccess( $remove_rules = false ) { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals
 	global $is_apache;
 
-	if ( ! $is_apache ) {
-		return;
+	/**
+	 * Filters disabling of WP Rocket htaccess rules
+	 *
+	 * @since 3.2.5
+	 *
+	 * @param bool $disable True to disable, false otherwise.
+	 */
+	if ( ! $is_apache || ( apply_filters( 'rocket_disable_htaccess', false ) && ! $remove_rules ) ) {
+		return false;
 	}
 
-	$rules = '';
+	if ( ! function_exists( 'get_home_path' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+	}
+
 	$htaccess_file = get_home_path() . '.htaccess';
 
-	if ( rocket_direct_filesystem()->is_writable( $htaccess_file ) ) {
-		// Get content of .htaccess file.
-		$ftmp = rocket_direct_filesystem()->get_contents( $htaccess_file );
-
-		// Remove the WP Rocket marker.
-		$ftmp = preg_replace( '/# BEGIN WP Rocket(.*)# END WP Rocket/isU', '', $ftmp );
-
-		/**
-		 * Determine if empty lines should be removed in the .htaccess file
-		 *
-		 * @since 2.10.7
-		 * @author Remy Perona
-		 * @param boolean $remove_empty_lines True to remove, false otherwise.
-		 */
-		if ( apply_filters( 'rocket_remove_empty_lines', true ) ) {
-			$ftmp = str_replace( "\n\n" , "\n" , $ftmp );
-		}
-
-		if ( false === $force ) {
-			$rules = get_rocket_htaccess_marker();
-		}
-
-		// Update the .htacces file.
-		rocket_put_content( $htaccess_file, $rules . $ftmp );
+	if ( ! rocket_direct_filesystem()->is_writable( $htaccess_file ) ) {
+		// The file is not writable or does not exist.
+		return false;
 	}
+
+	// Get content of .htaccess file.
+	$ftmp = rocket_direct_filesystem()->get_contents( $htaccess_file );
+
+	if ( false === $ftmp ) {
+		// Could not get the file contents.
+		return false;
+	}
+
+	// Check if the file contains the WP rules, before modifying anything.
+	$has_wp_rules = rocket_has_wp_htaccess_rules( $ftmp );
+
+	// Remove the WP Rocket marker.
+	$ftmp = preg_replace( '/\s*# BEGIN WP Rocket.*# END WP Rocket\s*?/isU', PHP_EOL . PHP_EOL, $ftmp );
+	$ftmp = ltrim( $ftmp );
+
+	if ( ! $remove_rules ) {
+		$ftmp = get_rocket_htaccess_marker() . PHP_EOL . $ftmp;
+	}
+
+	// Make sure the WP rules are still there.
+	if ( $has_wp_rules && ! rocket_has_wp_htaccess_rules( $ftmp ) ) {
+		return false;
+	}
+
+	// Update the .htacces file.
+	return rocket_put_content( $htaccess_file, $ftmp );
 }
 
 /**
@@ -68,13 +85,14 @@ function rocket_htaccess_rules_test( $rules_name ) {
 	 * @param array $args Array of argument for the request.
 	 */
 	$request_args = apply_filters(
-		'rocket_htaccess_rules_test_args', array(
+		'rocket_htaccess_rules_test_args',
+		[
 			'redirection' => 0,
 			'timeout'     => 5,
-			'sslverify'   => apply_filters( 'https_local_ssl_verify', false ),
+			'sslverify'   => apply_filters( 'https_local_ssl_verify', false ), // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals
 			'user-agent'  => 'wprocketbot',
 			'cookies'     => $_COOKIE,
-		)
+		]
 	);
 
 	$response = wp_remote_get( site_url( WP_ROCKET_URL . 'tests/' . $rules_name . '/index.html' ), $request_args );
@@ -93,9 +111,9 @@ function rocket_htaccess_rules_test( $rules_name ) {
  *
  * @return string $marker Rules that will be printed
  */
-function get_rocket_htaccess_marker() {
+function get_rocket_htaccess_marker() { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals
 	// Recreate WP Rocket marker.
-	$marker  = '# BEGIN WP Rocket v' . WP_ROCKET_VERSION . PHP_EOL;
+	$marker = '# BEGIN WP Rocket v' . WP_ROCKET_VERSION . PHP_EOL;
 
 	/**
 	 * Add custom rules before rules added by WP Rocket
@@ -104,7 +122,7 @@ function get_rocket_htaccess_marker() {
 	 *
 	 * @param string $before_marker The content of all rules.
 	*/
-	$marker .= apply_filters( 'before_rocket_htaccess_rules', '' );
+	$marker .= apply_filters( 'before_rocket_htaccess_rules', '' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals
 
 	$marker .= get_rocket_htaccess_charset();
 	$marker .= get_rocket_htaccess_etag();
@@ -113,8 +131,7 @@ function get_rocket_htaccess_marker() {
 	$marker .= get_rocket_htaccess_mod_expires();
 	$marker .= get_rocket_htaccess_mod_deflate();
 
-	/** This filter is documented in inc/front/process.php */
-	if ( apply_filters( 'do_rocket_generate_caching_files', true ) && ! is_rocket_generate_caching_mobile_files() ) {
+	if ( \WP_Rocket\Buffer\Cache::can_generate_caching_files() && ! is_rocket_generate_caching_mobile_files() ) {
 		$marker .= get_rocket_htaccess_mod_rewrite();
 	}
 
@@ -125,7 +142,7 @@ function get_rocket_htaccess_marker() {
 	 *
 	 * @param string $after_marker The content of all rules.
 	*/
-	$marker .= apply_filters( 'after_rocket_htaccess_rules', '' );
+	$marker .= apply_filters( 'after_rocket_htaccess_rules', '' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals
 
 	$marker .= '# END WP Rocket' . PHP_EOL;
 
@@ -148,7 +165,7 @@ function get_rocket_htaccess_marker() {
  *
  * @return string $rules Rules that will be printed
  */
-function get_rocket_htaccess_mod_rewrite() {
+function get_rocket_htaccess_mod_rewrite() { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals
 	// No rewrite rules for multisite.
 	if ( is_multisite() ) {
 		return;
@@ -167,40 +184,47 @@ function get_rocket_htaccess_mod_rewrite() {
 	$site_root = isset( $site_root ) ? trailingslashit( $site_root ) : '';
 
 	// Get cache root.
-	if ( strpos( ABSPATH, WP_ROCKET_CACHE_PATH ) === false ) {
-		$cache_root = str_replace( $_SERVER['DOCUMENT_ROOT'] , '', WP_ROCKET_CACHE_PATH );
+	if ( strpos( WP_ROCKET_CACHE_PATH, ABSPATH ) === false && isset( $_SERVER['DOCUMENT_ROOT'] ) ) {
+		$cache_root = '/' . ltrim( str_replace( sanitize_text_field( wp_unslash( $_SERVER['DOCUMENT_ROOT'] ) ), '', WP_ROCKET_CACHE_PATH ), '/' );
 	} else {
-		$cache_root = $site_root . str_replace( ABSPATH, '', WP_ROCKET_CACHE_PATH );
+		$cache_root = '/' . ltrim( $site_root . str_replace( ABSPATH, '', WP_ROCKET_CACHE_PATH ), '/' );
 	}
 
 	/**
-	  * Replace the dots by underscores to avoid some bugs on some shared hosting services on filenames (not multisite compatible!)
-	  *
-	  * @since 1.3.0
-	  *
-	  * @param bool true will replace the . by _.
+	 * Replace the dots by underscores to avoid some bugs on some shared hosting services on filenames (not multisite compatible!)
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param bool true will replace the . by _.
 	 */
 	$http_host = apply_filters( 'rocket_url_no_dots', false ) ? rocket_remove_url_protocol( home_url() ) : '%{HTTP_HOST}';
 
 	/**
-	  * Allow the path to be fully printed or dependant od %DOCUMENT_ROOT (forced for 1&1 by default)
-	  *
-	  * @since 1.3.0
-	  *
-	  * @param bool true will force the path to be full.
+	 * Allow the path to be fully printed or dependant od %DOCUMENT_ROOT (forced for 1&1 by default)
+	 *
+	 * @since 1.3.0
+	 *
+	 * @param bool true will force the path to be full.
 	 */
-	$is_1and1_or_force = apply_filters( 'rocket_force_full_path', strpos( $_SERVER['DOCUMENT_ROOT'], '/kunden/' ) === 0 );
+	$is_1and1_or_force = apply_filters( 'rocket_force_full_path', strpos( sanitize_text_field( wp_unslash( $_SERVER['DOCUMENT_ROOT'] ) ), '/kunden/' ) === 0 );
 
-	$rules = '';
+	$rules      = '';
 	$gzip_rules = '';
-	$enc = '';
+	$enc        = '';
 
+	if ( $is_1and1_or_force ) {
+		$cache_dir_path = str_replace( '/kunden/', '/', WP_ROCKET_CACHE_PATH ) . $http_host . '%{REQUEST_URI}';
+	} else {
+		$cache_dir_path = '%{DOCUMENT_ROOT}/' . ltrim( $cache_root, '/' ) . $http_host . '%{REQUEST_URI}';
+	}
+
+	// @codingStandardsIgnoreStart
 	/**
-	  * Allow to serve gzip cache file
-	  *
-	  * @since 2.4
-	  *
-	  * @param bool true will force to serve gzip cache file.
+	 * Allow to serve gzip cache file
+	 *
+	 * @since 2.4
+	 *
+	 * @param bool true will force to serve gzip cache file.
 	 */
 	if ( function_exists( 'gzencode' ) && apply_filters( 'rocket_force_gzip_htaccess_rules', true ) ) {
 		$rules = '<IfModule mod_mime.c>' . PHP_EOL;
@@ -221,6 +245,7 @@ function get_rocket_htaccess_mod_rewrite() {
 	$rules .= 'RewriteEngine On' . PHP_EOL;
 	$rules .= 'RewriteBase ' . $home_root . PHP_EOL;
 	$rules .= get_rocket_htaccess_ssl_rewritecond();
+	$rules .= rocket_get_webp_rewritecond( $cache_dir_path );
 	$rules .= $gzip_rules;
 	$rules .= 'RewriteCond %{REQUEST_METHOD} GET' . PHP_EOL;
 	$rules .= 'RewriteCond %{QUERY_STRING} =""' . PHP_EOL;
@@ -242,13 +267,8 @@ function get_rocket_htaccess_mod_rewrite() {
 		$rules .= 'RewriteCond %{HTTP_USER_AGENT} !^(' . $ua . ').* [NC]' . PHP_EOL;
 	}
 
-	if ( $is_1and1_or_force ) {
-		$rules .= 'RewriteCond "' . str_replace( '/kunden/', '/', WP_ROCKET_CACHE_PATH ) . $http_host . '%{REQUEST_URI}/index%{ENV:WPR_SSL}.html' . $enc . '" -f' . PHP_EOL;
-	} else {
-		$rules .= 'RewriteCond "%{DOCUMENT_ROOT}/' . ltrim( $cache_root, '/' ) . $http_host . '%{REQUEST_URI}/index%{ENV:WPR_SSL}.html' . $enc . '" -f' . PHP_EOL;
-	}
-
-	$rules .= 'RewriteRule .* "' . $cache_root . $http_host . '%{REQUEST_URI}/index%{ENV:WPR_SSL}.html' . $enc . '" [L]' . PHP_EOL;
+	$rules .= 'RewriteCond "' . $cache_dir_path . '/index%{ENV:WPR_SSL}%{ENV:WPR_WEBP}.html' . $enc . '" -f' . PHP_EOL;
+	$rules .= 'RewriteRule .* "' . $cache_root . $http_host . '%{REQUEST_URI}/index%{ENV:WPR_SSL}%{ENV:WPR_WEBP}.html' . $enc . '" [L]' . PHP_EOL;
 	$rules .= '</IfModule>' . PHP_EOL;
 
 	/**
@@ -270,13 +290,13 @@ function get_rocket_htaccess_mod_rewrite() {
  *
  * @return string $rules Rules that will be printed
  */
-function get_rocket_htaccess_mobile_rewritecond() {
+function get_rocket_htaccess_mobile_rewritecond() { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals
 	// No rewrite rules for multisite.
 	if ( is_multisite() ) {
 		return;
 	}
 
-	$rules = 'RewriteCond %{HTTP:X-Wap-Profile} !^[a-z0-9\"]+ [NC]' . PHP_EOL;
+	$rules  = 'RewriteCond %{HTTP:X-Wap-Profile} !^[a-z0-9\"]+ [NC]' . PHP_EOL;
 	$rules .= 'RewriteCond %{HTTP:Profile} !^[a-z0-9\"]+ [NC]' . PHP_EOL;
 	$rules .= 'RewriteCond %{HTTP_USER_AGENT} !^.*(2.0\ MMP|240x320|400X240|AvantGo|BlackBerry|Blazer|Cellphone|Danger|DoCoMo|Elaine/3.0|EudoraWeb|Googlebot-Mobile|hiptop|IEMobile|KYOCERA/WX310K|LG/U990|MIDP-2.|MMEF20|MOT-V|NetFront|Newt|Nintendo\ Wii|Nitro|Nokia|Opera\ Mini|Palm|PlayStation\ Portable|portalmmm|Proxinet|ProxiNet|SHARP-TQ-GX10|SHG-i900|Small|SonyEricsson|Symbian\ OS|SymbianOS|TS21i-10|UP.Browser|UP.Link|webOS|Windows\ CE|WinWAP|YahooSeeker/M1A1-R2D2|iPhone|iPod|Android|BlackBerry9530|LG-TU915\ Obigo|LGE\ VX|webOS|Nokia5800).* [NC]' . PHP_EOL;
 	$rules .= 'RewriteCond %{HTTP_USER_AGENT} !^(w3c\ |w3c-|acs-|alav|alca|amoi|audi|avan|benq|bird|blac|blaz|brew|cell|cldc|cmd-|dang|doco|eric|hipt|htc_|inno|ipaq|ipod|jigs|kddi|keji|leno|lg-c|lg-d|lg-g|lge-|lg/u|maui|maxo|midp|mits|mmef|mobi|mot-|moto|mwbp|nec-|newt|noki|palm|pana|pant|phil|play|port|prox|qwap|sage|sams|sany|sch-|sec-|send|seri|sgh-|shar|sie-|siem|smal|smar|sony|sph-|symb|t-mo|teli|tim-|tosh|tsm-|upg1|upsi|vk-v|voda|wap-|wapa|wapi|wapp|wapr|webc|winw|winw|xda\ |xda-).* [NC]' . PHP_EOL;
@@ -301,7 +321,7 @@ function get_rocket_htaccess_mobile_rewritecond() {
  *
  * @return string $rules Rules that will be printed
  */
-function get_rocket_htaccess_ssl_rewritecond() {
+function get_rocket_htaccess_ssl_rewritecond() { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals
 	$rules  = 'RewriteCond %{HTTPS} on [OR]' . PHP_EOL;
 	$rules .= 'RewriteCond %{SERVER_PORT} ^443$ [OR]' . PHP_EOL;
 	$rules .= 'RewriteCond %{HTTP:X-Forwarded-Proto} https' . PHP_EOL;
@@ -320,13 +340,42 @@ function get_rocket_htaccess_ssl_rewritecond() {
 }
 
 /**
+ * Rules for webp compatible browsers.
+ *
+ * @since  3.4
+ * @author Grégory Viguier
+ *
+ * @param  string $cache_dir_path Path to the cache directory, without trailing slash.
+ * @return string                 Rules that will be printed.
+ */
+function rocket_get_webp_rewritecond( $cache_dir_path ) {
+	if ( ! get_rocket_option( 'cache_webp' ) ) {
+		return '';
+	}
+
+	$rules  = 'RewriteCond %{HTTP_ACCEPT} image/webp' . PHP_EOL;
+	$rules .= 'RewriteCond "' . $cache_dir_path . '/.no-webp" !-f' . PHP_EOL;
+	$rules .= 'RewriteRule .* - [E=WPR_WEBP:-webp]' . PHP_EOL;
+
+	/**
+	 * Filter rules for webp.
+	 *
+	 * @since  3.4
+	 * @author Grégory Viguier
+	 *
+	 * @param string $rules Rules that will be printed.
+	*/
+	return apply_filters( 'rocket_webp_rewritecond', $rules );
+}
+
+/**
  * Rules to improve performances with GZIP Compression
  *
  * @since 1.0
  *
  * @return string $rules Rules that will be printed
  */
-function get_rocket_htaccess_mod_deflate() {
+function get_rocket_htaccess_mod_deflate() { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals
 	$rules = '# Gzip compression' . PHP_EOL;
 	$rules .= '<IfModule mod_deflate.c>' . PHP_EOL;
 		$rules .= '# Active compression' . PHP_EOL;
@@ -384,12 +433,15 @@ function get_rocket_htaccess_mod_deflate() {
  *
  * @return string $rules Rules that will be printed
  */
-function get_rocket_htaccess_mod_expires() {
+function get_rocket_htaccess_mod_expires() { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals
 	$rules = <<<HTACCESS
+<IfModule mod_mime.c>
+	AddType image/avif                                  avif
+    AddType image/avif-sequence                         avifs
+</IfModule>
 # Expires headers (for better cache control)
 <IfModule mod_expires.c>
 	ExpiresActive on
-	# Perhaps better to whitelist expires rules? Perhaps.
 	ExpiresDefault                              "access plus 1 month"
 	# cache.appcache needs re-requests in FF 3.6 (thanks Remy ~Introducing HTML5)
 	ExpiresByType text/cache-manifest           "access plus 0 seconds"
@@ -409,18 +461,20 @@ function get_rocket_htaccess_mod_expires() {
 	ExpiresByType image/png                     "access plus 4 months"
 	ExpiresByType image/jpeg                    "access plus 4 months"
 	ExpiresByType image/webp                    "access plus 4 months"
-	ExpiresByType video/ogg                     "access plus 1 month"
-	ExpiresByType audio/ogg                     "access plus 1 month"
-	ExpiresByType video/mp4                     "access plus 1 month"
-	ExpiresByType video/webm                    "access plus 1 month"
+	ExpiresByType video/ogg                     "access plus 4 months"
+	ExpiresByType audio/ogg                     "access plus 4 months"
+	ExpiresByType video/mp4                     "access plus 4 months"
+	ExpiresByType video/webm                    "access plus 4 months"
+	ExpiresByType image/avif                    "access plus 4 months"
+	ExpiresByType image/avif-sequence           "access plus 4 months"
 	# HTC files  (css3pie)
 	ExpiresByType text/x-component              "access plus 1 month"
 	# Webfonts
-	ExpiresByType application/x-font-ttf        "access plus 1 month"
-	ExpiresByType font/opentype                 "access plus 1 month"
-	ExpiresByType application/x-font-woff       "access plus 1 month"
-	ExpiresByType application/x-font-woff2      "access plus 1 month"
-	ExpiresByType image/svg+xml                 "access plus 1 month"
+	ExpiresByType font/ttf                      "access plus 4 months"
+	ExpiresByType font/otf                      "access plus 4 months"
+	ExpiresByType font/woff                     "access plus 4 months"
+	ExpiresByType font/woff2                    "access plus 4 months"
+	ExpiresByType image/svg+xml                 "access plus 4 months"
 	ExpiresByType application/vnd.ms-fontobject "access plus 1 month"
 	# CSS and JavaScript
 	ExpiresByType text/css                      "access plus 1 year"
@@ -448,9 +502,13 @@ HTACCESS;
  *
  * @return string $rules Rules that will be printed
  */
-function get_rocket_htaccess_charset() {
+function get_rocket_htaccess_charset() { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals
 	// Get charset of the blog.
 	$charset = preg_replace( '/[^a-zA-Z0-9_\-\.:]+/', '', get_bloginfo( 'charset', 'display' ) );
+
+	if ( empty( $charset ) ) {
+		return '';
+	}
 
 	$rules = "# Use $charset encoding for anything served text/plain or text/html" . PHP_EOL;
 	$rules .= "AddDefaultCharset $charset" . PHP_EOL;
@@ -478,7 +536,7 @@ function get_rocket_htaccess_charset() {
  *
  * @return string $rules Rules that will be printed
  */
-function get_rocket_htaccess_files_match() {
+function get_rocket_htaccess_files_match() { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals
 	$rules = '<IfModule mod_alias.c>' . PHP_EOL;
 		$rules .= '<FilesMatch "\.(html|htm|rtf|rtx|txt|xsd|xsl|xml)$">' . PHP_EOL;
 			$rules .= '<IfModule mod_headers.c>' . PHP_EOL;
@@ -515,7 +573,7 @@ function get_rocket_htaccess_files_match() {
  *
  * @return string $rules Rules that will be printed
  */
-function get_rocket_htaccess_etag() {
+function get_rocket_htaccess_etag() { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals
 	$rules  = '# FileETag None is not enough for every server.' . PHP_EOL;
 	$rules .= '<IfModule mod_headers.c>' . PHP_EOL;
 	$rules .= 'Header unset ETag' . PHP_EOL;
@@ -543,7 +601,7 @@ function get_rocket_htaccess_etag() {
  *
  * @return string $rules Rules that will be printed
  */
-function get_rocket_htaccess_web_fonts_access() {
+function get_rocket_htaccess_web_fonts_access() { // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals
 	if ( ! get_rocket_option( 'cdn', false ) ) {
 		return;
 	}
@@ -552,7 +610,7 @@ function get_rocket_htaccess_web_fonts_access() {
 	$rules  .= '<IfModule mod_setenvif.c>' . PHP_EOL;
 	  $rules  .= '<IfModule mod_headers.c>' . PHP_EOL;
 		$rules  .= '# mod_headers, y u no match by Content-Type?!' . PHP_EOL;
-		$rules  .= '<FilesMatch "\.(cur|gif|png|jpe?g|svgz?|ico|webp)$">' . PHP_EOL;
+		$rules  .= '<FilesMatch "\.(avifs?|cur|gif|png|jpe?g|svgz?|ico|webp)$">' . PHP_EOL;
 		  $rules  .= 'SetEnvIf Origin ":" IS_CORS' . PHP_EOL;
 		  $rules  .= 'Header set Access-Control-Allow-Origin "*" env=IS_CORS' . PHP_EOL;
 		$rules  .= '</FilesMatch>' . PHP_EOL;
@@ -565,7 +623,7 @@ function get_rocket_htaccess_web_fonts_access() {
 			$rules .= 'Header set Access-Control-Allow-Origin "*"' . PHP_EOL;
 		$rules .= '</IfModule>' . PHP_EOL;
 	$rules .= '</FilesMatch>' . PHP_EOL . PHP_EOL;
-
+	// @codingStandardsIgnoreEnd
 	/**
 	 * Filter rules to Cross-origin fonts sharing
 	 *
@@ -576,4 +634,60 @@ function get_rocket_htaccess_web_fonts_access() {
 	$rules = apply_filters( 'rocket_htaccess_web_fonts_access', $rules );
 
 	return $rules;
+}
+
+/**
+ * Tell if WP rewrite rules are present in a given string.
+ *
+ * @since  3.2.4
+ * @author Grégory Viguier
+ *
+ * @param  string $content Htaccess content.
+ * @return bool
+ */
+function rocket_has_wp_htaccess_rules( $content ) {
+	if ( is_multisite() ) {
+		$has_wp_rules = strpos( $content, '# add a trailing slash to /wp-admin' ) !== false;
+	} else {
+		$has_wp_rules = strpos( $content, '# BEGIN WordPress' ) !== false;
+	}
+
+	/**
+	 * Tell if WP rewrite rules are present in a given string.
+	 *
+	 * @since  3.2.4
+	 * @author Grégory Viguier
+	 *
+	 * @param bool   $has_wp_rules True when present. False otherwise.
+	 * @param string $content      .htaccess content.
+	 */
+	return apply_filters( 'rocket_has_wp_htaccess_rules', $has_wp_rules, $content );
+}
+
+/**
+ * Check if WP Rocket htaccess rules are already present in the file
+ *
+ * @since 3.3.5
+ * @author Remy Perona
+ *
+ * @return bool
+ */
+function rocket_check_htaccess_rules() {
+	if ( ! function_exists( 'get_home_path' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+	}
+
+	$htaccess_file = get_home_path() . '.htaccess';
+
+	if ( ! rocket_direct_filesystem()->is_readable( $htaccess_file ) ) {
+		return false;
+	}
+
+	$htaccess = rocket_direct_filesystem()->get_contents( $htaccess_file );
+
+	if ( preg_match( '/\s*# BEGIN WP Rocket.*# END WP Rocket\s*?/isU', $htaccess ) ) {
+		return true;
+	}
+
+	return false;
 }
