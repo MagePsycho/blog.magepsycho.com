@@ -4,7 +4,7 @@
  *
  * @package WordPress
  * @subpackage Twenty_Nineteen
- * @since 1.0.0
+ * @since Twenty Nineteen 1.0
  */
 
 if ( ! function_exists( 'twentynineteen_posted_on' ) ) :
@@ -40,9 +40,10 @@ if ( ! function_exists( 'twentynineteen_posted_by' ) ) :
 	 */
 	function twentynineteen_posted_by() {
 		printf(
-			/* translators: 1: SVG icon. 2: post author, only visible to screen readers. 3: author link. */
+			/* translators: 1: SVG icon. 2: Post author, only visible to screen readers. 3: Author link. */
 			'<span class="byline">%1$s<span class="screen-reader-text">%2$s</span><span class="author vcard"><a class="url fn n" href="%3$s">%4$s</a></span></span>',
 			twentynineteen_get_icon_svg( 'person', 16 ),
+			/* translators: Hidden accessibility text. */
 			__( 'Posted by', 'twentynineteen' ),
 			esc_url( get_author_posts_url( get_the_author_meta( 'ID' ) ) ),
 			esc_html( get_the_author() )
@@ -59,7 +60,7 @@ if ( ! function_exists( 'twentynineteen_comment_count' ) ) :
 			echo '<span class="comments-link">';
 			echo twentynineteen_get_icon_svg( 'comment', 16 );
 
-			/* translators: %s: Name of current post. Only visible to screen readers. */
+			/* translators: %s: Post title. Only visible to screen readers. */
 			comments_popup_link( sprintf( __( 'Leave a comment<span class="screen-reader-text"> on %s</span>', 'twentynineteen' ), get_the_title() ) );
 
 			echo '</span>';
@@ -76,31 +77,31 @@ if ( ! function_exists( 'twentynineteen_entry_footer' ) ) :
 		// Hide author, post date, category and tag text for pages.
 		if ( 'post' === get_post_type() ) {
 
-			// Posted by
+			// Posted by.
 			twentynineteen_posted_by();
 
-			// Posted on
+			// Posted on.
 			twentynineteen_posted_on();
 
-			/* translators: used between list items, there is a space after the comma. */
-			$categories_list = get_the_category_list( __( ', ', 'twentynineteen' ) );
+			$categories_list = get_the_category_list( wp_get_list_item_separator() );
 			if ( $categories_list ) {
 				printf(
-					/* translators: 1: SVG icon. 2: posted in label, only visible to screen readers. 3: list of categories. */
+					/* translators: 1: SVG icon. 2: Posted in label, only visible to screen readers. 3: List of categories. */
 					'<span class="cat-links">%1$s<span class="screen-reader-text">%2$s</span>%3$s</span>',
 					twentynineteen_get_icon_svg( 'archive', 16 ),
+					/* translators: Hidden accessibility text. */
 					__( 'Posted in', 'twentynineteen' ),
 					$categories_list
 				); // WPCS: XSS OK.
 			}
 
-			/* translators: used between list items, there is a space after the comma. */
-			$tags_list = get_the_tag_list( '', __( ', ', 'twentynineteen' ) );
-			if ( $tags_list ) {
+			$tags_list = get_the_tag_list( '', wp_get_list_item_separator() );
+			if ( $tags_list && ! is_wp_error( $tags_list ) ) {
 				printf(
-					/* translators: 1: SVG icon. 2: posted in label, only visible to screen readers. 3: list of tags. */
+					/* translators: 1: SVG icon. 2: Posted in label, only visible to screen readers. 3: List of tags. */
 					'<span class="tags-links">%1$s<span class="screen-reader-text">%2$s </span>%3$s</span>',
 					twentynineteen_get_icon_svg( 'tag', 16 ),
+					/* translators: Hidden accessibility text. */
 					__( 'Tags:', 'twentynineteen' ),
 					$tags_list
 				); // WPCS: XSS OK.
@@ -116,7 +117,7 @@ if ( ! function_exists( 'twentynineteen_entry_footer' ) ) :
 		edit_post_link(
 			sprintf(
 				wp_kses(
-					/* translators: %s: Name of current post. Only visible to screen readers. */
+					/* translators: %s: Post title. Only visible to screen readers. */
 					__( 'Edit <span class="screen-reader-text">%s</span>', 'twentynineteen' ),
 					array(
 						'span' => array(
@@ -166,7 +167,7 @@ if ( ! function_exists( 'twentynineteen_post_thumbnail' ) ) :
 	}
 endif;
 
-if ( ! function_exists( 'twentynineteen_comment_avatar' ) ) :
+if ( ! function_exists( 'twentynineteen_get_user_avatar_markup' ) ) :
 	/**
 	 * Returns the HTML markup to generate a user avatar.
 	 */
@@ -201,15 +202,14 @@ endif;
 
 if ( ! function_exists( 'twentynineteen_comment_form' ) ) :
 	/**
-	 * Documentation for function.
+	 * Displays the comment form.
 	 */
 	function twentynineteen_comment_form( $order ) {
 		if ( true === $order || strtolower( $order ) === strtolower( get_option( 'comment_order', 'asc' ) ) ) {
 
 			comment_form(
 				array(
-					'logged_in_as' => null,
-					'title_reply'  => null,
+					'title_reply' => null,
 				)
 			);
 		}
@@ -218,23 +218,44 @@ endif;
 
 if ( ! function_exists( 'twentynineteen_the_posts_navigation' ) ) :
 	/**
-	 * Documentation for function.
+	 * Displays the next and previous posts navigation.
 	 */
 	function twentynineteen_the_posts_navigation() {
+		$order          = get_query_var( 'order', 'DESC' );
+		$new_posts_text = __( 'Newer posts', 'twentynineteen' );
+		$old_posts_text = __( 'Older posts', 'twentynineteen' );
 		the_posts_pagination(
 			array(
 				'mid_size'  => 2,
 				'prev_text' => sprintf(
 					'%s <span class="nav-prev-text">%s</span>',
 					twentynineteen_get_icon_svg( 'chevron_left', 22 ),
-					__( 'Newer posts', 'twentynineteen' )
+					( 'DESC' === $order ) ? $new_posts_text : $old_posts_text
 				),
 				'next_text' => sprintf(
 					'<span class="nav-next-text">%s</span> %s',
-					__( 'Older posts', 'twentynineteen' ),
+					( 'DESC' === $order ) ? $old_posts_text : $new_posts_text,
 					twentynineteen_get_icon_svg( 'chevron_right', 22 )
 				),
 			)
 		);
+	}
+endif;
+
+if ( ! function_exists( 'wp_body_open' ) ) :
+	/**
+	 * Fires the wp_body_open action.
+	 *
+	 * Added for backward compatibility to support pre-5.2.0 WordPress versions.
+	 *
+	 * @since Twenty Nineteen 1.4
+	 */
+	function wp_body_open() {
+		/**
+		 * Triggered after the opening <body> tag.
+		 *
+		 * @since Twenty Nineteen 1.4
+		 */
+		do_action( 'wp_body_open' );
 	}
 endif;

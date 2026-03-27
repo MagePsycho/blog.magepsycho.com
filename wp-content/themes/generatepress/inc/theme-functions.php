@@ -562,26 +562,10 @@ function generate_do_template_part( $template ) {
 	if ( apply_filters( 'generate_do_template_part', true, $template ) ) {
 		if ( 'archive' === $template || 'index' === $template ) {
 			get_template_part( 'content', get_post_format() );
-		}
-
-		if ( 'page' === $template ) {
-			get_template_part( 'content', 'page' );
-		}
-
-		if ( 'single' === $template ) {
-			get_template_part( 'content', 'single' );
-		}
-
-		if ( 'search' === $template ) {
-			get_template_part( 'content', 'search' );
-		}
-
-		if ( '404' === $template ) {
-			get_template_part( 'content', '404' );
-		}
-
-		if ( 'none' === $template ) {
+		} elseif ( 'none' === $template ) {
 			get_template_part( 'no-results' );
+		} else {
+			get_template_part( 'content', $template );
 		}
 	}
 
@@ -841,4 +825,20 @@ function generate_has_active_menu() {
  */
 function generate_is_using_dynamic_typography() {
 	return generate_get_option( 'use_dynamic_typography' );
+}
+
+/**
+ * Add inline script.
+ *
+ * @param string $handle The script handle to attach the inline script to.
+ * @param array  $data   The data to be passed to the script.
+ * @param string $var    The JavaScript variable name to assign the data to.
+ * @param string $position The position to add the inline script.
+ */
+function generate_add_inline_script( $handle, $data, $var, $position = 'before' ) {
+	if ( ! empty( $data ) ) {
+		$json_data = wp_json_encode( $data );
+		$inline_script = "var $var = $json_data;";
+		wp_add_inline_script( $handle, $inline_script, $position );
+	}
 }

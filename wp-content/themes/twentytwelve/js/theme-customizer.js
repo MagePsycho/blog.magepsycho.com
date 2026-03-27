@@ -18,17 +18,17 @@
 		} );
 	} );
 
-	// Header text color
+	// Header text color.
 	wp.customize( 'header_textcolor', function( value ) {
 		value.bind( function( to ) {
 			if ( 'blank' === to ) {
 				$( '.site-title, .site-title a, .site-description' ).css( {
-					'clip': 'rect(1px, 1px, 1px, 1px)',
+					'clip-path': 'inset(50%)',
 					'position': 'absolute'
 				} );
 			} else {
 				$( '.site-title, .site-title a, .site-description' ).css( {
-					'clip': 'auto',
+					'clip-path': 'none',
 					'color': to,
 					'position': 'relative'
 				} );
@@ -41,9 +41,9 @@
 		value.bind( function( to ) {
 			var body = $( 'body' );
 
-			if ( ( '#ffffff' == to || '#fff' == to ) && 'none' == body.css( 'background-image' ) )
+			if ( ( '#ffffff' === to || '#fff' === to ) && 'none' === body.css( 'background-image' ) )
 				body.addClass( 'custom-background-white' );
-			else if ( '' == to && 'none' == body.css( 'background-image' ) )
+			else if ( '' === to && 'none' === body.css( 'background-image' ) )
 				body.addClass( 'custom-background-empty' );
 			else
 				body.removeClass( 'custom-background-empty custom-background-white' );

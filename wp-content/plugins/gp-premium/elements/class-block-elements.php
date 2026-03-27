@@ -41,7 +41,7 @@ class GeneratePress_Block_Elements {
 	public function __construct() {
 		add_action( 'enqueue_block_editor_assets', array( $this, 'enqueue_assets' ), 8 );
 
-		if ( version_compare( $GLOBALS['wp_version'], '5.8-alpha-1', '<' ) ) {
+		if ( version_compare( $GLOBALS['wp_version'], '5.8', '<' ) ) {
 			add_filter( 'block_categories', array( $this, 'add_block_category' ) );
 		} else {
 			add_filter( 'block_categories_all', array( $this, 'add_block_category' ) );
@@ -78,8 +78,11 @@ class GeneratePress_Block_Elements {
 		wp_set_script_translations( 'gp-premium-block-elements', 'gp-premium', GP_PREMIUM_DIR_PATH . 'langs' );
 
 		$taxonomies = get_taxonomies(
-			array(
-				'public'   => true,
+			apply_filters(
+				'generate_get_block_element_taxonomies_args',
+				array(
+					'public' => true,
+				)
 			)
 		);
 
@@ -310,7 +313,13 @@ class GeneratePress_Block_Elements {
 	 * Build our content block.
 	 */
 	public function do_content_block() {
-		if ( 'gp_elements' !== get_post_type() && ! is_admin() ) {
+		// Prevents infinite loops while in the editor or autosaving.
+		$nonpublic_post_types = array(
+			'gp_elements',
+			'revision',
+		);
+
+		if ( ! in_array( get_post_type(), $nonpublic_post_types ) && ! is_admin() ) {
 			return sprintf(
 				'<div class="dynamic-entry-content">%s</div>',
 				apply_filters( 'the_content', str_replace( ']]>', ']]&gt;', get_the_content() ) ) // phpcs:ignore -- Core filter.
@@ -586,16 +595,18 @@ class GeneratePress_Block_Elements {
 			$url = get_permalink( $id );
 		}
 
-		if ( 'post-meta' === $link_type ) {
-			$url = get_post_meta( $id, $block['attrs']['gpDynamicLinkCustomField'], true );
-		}
+		if ( isset( $block['attrs']['gpDynamicLinkCustomField'] ) ) {
+			if ( 'post-meta' === $link_type ) {
+				$url = get_post_meta( $id, $block['attrs']['gpDynamicLinkCustomField'], true );
+			}
 
-		if ( 'user-meta' === $link_type ) {
-			$url = $this->get_user_data( $author_id, $block['attrs']['gpDynamicLinkCustomField'] );
-		}
+			if ( 'user-meta' === $link_type ) {
+				$url = $this->get_user_data( $author_id, $block['attrs']['gpDynamicLinkCustomField'] );
+			}
 
-		if ( 'term-meta' === $link_type ) {
-			$url = get_term_meta( get_queried_object_id(), $block['attrs']['gpDynamicTextCustomField'], true );
+			if ( 'term-meta' === $link_type ) {
+				$url = get_term_meta( get_queried_object_id(), $block['attrs']['gpDynamicLinkCustomField'], true );
+			}
 		}
 
 		if ( 'author-archives' === $link_type ) {
@@ -753,6 +764,10 @@ class GeneratePress_Block_Elements {
 							$post_title = post_type_archive_title( '', false );
 						} elseif ( is_archive() && function_exists( 'get_the_archive_title' ) ) {
 							$post_title = get_the_archive_title();
+
+							if ( is_author() ) {
+								$post_title = get_the_author();
+							}
 						} elseif ( is_home() ) {
 							$page_for_posts = get_option( 'page_for_posts' );
 
@@ -963,6 +978,10 @@ class GeneratePress_Block_Elements {
 								$custom_field = $block['attrs']['gpDynamicTextBefore'] . $custom_field;
 							}
 
+							add_filter( 'wp_kses_allowed_html', [ 'GeneratePress_Elements_Helper', 'expand_allowed_html' ], 10, 2 );
+							$custom_field = wp_kses_post( $custom_field );
+							remove_filter( 'wp_kses_allowed_html', [ 'GeneratePress_Elements_Helper', 'expand_allowed_html' ], 10, 2 );
+
 							$custom_field = apply_filters( 'generate_dynamic_element_text_output', $custom_field, $block );
 							$block_content = str_replace( $text_to_replace, $custom_field, $block_content );
 						} else {
@@ -1132,8 +1151,8 @@ class GeneratePress_Block_Elements {
 			}
 
 			if ( 'user-meta' === $settings['gpDynamicImageBg'] ) {
-				$author_id = $this->get_author_id( $source, $block['attrs'] );
-				$custom_field = $this->get_user_data( $author_id, $block['attrs']['gpDynamicImageCustomField'] );
+				$author_id = $this->get_author_id( $source, $settings );
+				$custom_field = $this->get_user_data( $author_id, $settings['gpDynamicImageCustomField'] );
 			}
 
 			if ( 'featured-image' === $settings['gpDynamicImageBg'] && has_post_thumbnail( $id ) ) {
@@ -1180,8 +1199,8 @@ class GeneratePress_Block_Elements {
 				}
 
 				if ( 'user-meta' === $settings['gpDynamicImageBg'] ) {
-					$author_id = $this->get_author_id( $source, $block['attrs'] );
-					$custom_field = $this->get_user_data( $author_id, $block['attrs']['gpDynamicImageCustomField'] );
+					$author_id = $this->get_author_id( $source, $settings );
+					$custom_field = $this->get_user_data( $author_id, $settings['gpDynamicImageCustomField'] );
 				}
 
 				if ( 'featured-image' === $settings['gpDynamicImageBg'] && has_post_thumbnail( $id ) ) {
@@ -1301,7 +1320,13 @@ class GeneratePress_Block_Elements {
 	public function set_dynamic_container_url( $attributes, $settings ) {
 		$link_type = ! empty( $settings['gpDynamicLinkType'] ) ? $settings['gpDynamicLinkType'] : '';
 
-		if ( $link_type && '' !== $settings['url'] && ( 'wrapper' === $settings['linkType'] || 'hidden-link' === $settings['linkType'] ) ) {
+		if (
+			$link_type &&
+			isset( $settings['url'] ) &&
+			isset( $settings['linkType'] ) &&
+			'' !== $settings['url'] &&
+			( 'wrapper' === $settings['linkType'] || 'hidden-link' === $settings['linkType'] )
+		) {
 			if ( ! empty( $link_type ) ) {
 				$source = ! empty( $settings['gpDynamicSource'] ) ? $settings['gpDynamicSource'] : 'current-post';
 				$id = $this->get_source_id( $source, $settings );

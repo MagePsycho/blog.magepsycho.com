@@ -1,5 +1,5 @@
 /**
- * File customizer.js.
+ * File customize-controls.js.
  *
  * Theme Customizer enhancements for a better user experience.
  *
@@ -20,11 +20,12 @@
 						control.container.slideUp( 180 );
 					}
 				};
-
+				// The control-specific label is redundant because, visually, this control is part of the Color Scheme control.
+				control.container.find( '.customize-control-title:first' ).addClass( 'screen-reader-text' );
 				visibility();
 				setting.bind( visibility );
 			});
 		});
 	});
 
-})( jQuery );
+})();

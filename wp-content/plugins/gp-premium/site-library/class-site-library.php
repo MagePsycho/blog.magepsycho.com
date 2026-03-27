@@ -114,6 +114,8 @@ class GeneratePress_Site_Library {
 					'hasBackup' => ! empty( get_option( '_generatepress_site_library_backup', array() ) ),
 					'gppVersion' => GP_PREMIUM_VERSION,
 					'gpVersion' => generate_premium_get_theme_version(),
+					'generateblocksVersion' => defined( 'GENERATEBLOCKS_VERSION' ) ? GENERATEBLOCKS_VERSION : '',
+					'isGenerateBlocksProInstalled' => file_exists( WP_PLUGIN_DIR . '/generateblocks-pro/plugin.php' ),
 					'elementorReplaceUrls' => esc_url( admin_url( 'admin.php?page=elementor-tools#tab-replace_url' ) ),
 					'uploadsUrl' => $uploads_url['baseurl'],
 					'isDebugEnabled' => defined( 'WP_DEBUG' ) && true === WP_DEBUG,
@@ -179,6 +181,7 @@ class GeneratePress_Site_Library {
 			'name' => __( 'Site Library', 'gp-premium' ),
 			'url' => admin_url( 'themes.php?page=generatepress-library' ),
 			'class' => 'appearance_page_generatepress-library' === $screen->id ? 'active' : '',
+			'id' => 'gp-site-library-tab',
 		);
 
 		return $tabs;

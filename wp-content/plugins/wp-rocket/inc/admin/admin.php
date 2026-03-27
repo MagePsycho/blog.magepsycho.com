@@ -125,7 +125,7 @@ add_filter( 'user_row_actions', 'rocket_user_row_actions', 10, 2 );
  *
  * @since 3.6   Reverse dependency with rocket_dismiss_box().
  * @since 2.4   Add a delete_transient on function name (box name).
- * @since 1.3.0 $args can replace $_GET when called internaly.
+ * @since 1.3.0 $args can replace $_GET when called internally.
  * @since 1.1.10
  *
  * @param array $args An array of query args. Should not be used: see rocket_dismiss_box().
@@ -329,32 +329,13 @@ function rocket_analytics_data() {
 		$data['license_type'] = rocket_get_license_type( $customer_data );
 	}
 
+	$media_font_data = get_transient( 'rocket_fonts_data_collection' );
+
+	if ( false !== $media_font_data ) {
+		$data = array_merge( $data, $media_font_data );
+	}
+
 	return $data;
-}
-
-/**
- * Determines if we should send the analytics data
- *
- * @since 2.11
- * @author Remy Perona
- *
- * @return bool True if we should send them, false otherwise
- */
-function rocket_send_analytics_data() {
-	if ( ! get_rocket_option( 'analytics_enabled' ) ) {
-		return false;
-	}
-
-	if ( ! current_user_can( 'rocket_manage_options' ) ) {
-		return false;
-	}
-
-	if ( false === get_transient( 'rocket_send_analytics_data' ) ) {
-		set_transient( 'rocket_send_analytics_data', 1, 7 * DAY_IN_SECONDS );
-		return true;
-	}
-
-	return false;
 }
 
 /**
@@ -374,7 +355,7 @@ function rocket_analytics_optin() {
 	}
 
 	if ( isset( $_GET['value'] ) && 'yes' === $_GET['value'] ) {
-		update_rocket_option( 'analytics_enabled', 1 );
+		update_option( 'rocket_mixpanel_optin', 1 );
 		set_transient( 'rocket_analytics_optin', 1 );
 	}
 
@@ -452,8 +433,9 @@ function rocket_handle_settings_import() {
 	rocket_direct_filesystem()->delete( $file['file'] );
 
 	if ( is_array( $settings ) ) {
-		$options_api     = new WP_Rocket\Admin\Options( 'wp_rocket_' );
-		$current_options = $options_api->get( 'settings', [] );
+		$options_api        = new WP_Rocket\Admin\Options( 'wp_rocket_' );
+		$current_options    = $options_api->get( 'settings', [] );
+		$regenerate_configs = false;
 
 		$settings['consumer_key']     = $current_options['consumer_key'];
 		$settings['consumer_email']   = $current_options['consumer_email'];
@@ -472,7 +454,21 @@ function rocket_handle_settings_import() {
 			$settings['cache_webp'] = 0;
 		}
 
+		if ( $settings['cache_mobile'] && ! $settings['do_caching_mobile_files'] ) {
+			$settings['do_caching_mobile_files'] = 1;
+			$regenerate_configs                  = true;
+		}
+
 		$options_api->set( 'settings', $settings );
+
+		/**
+		 * Fires after imported settings have been saved.
+		 *
+		 * @since 3.16
+		 *
+		 * @param boolean $regenerate_configs Returns whether to regenerate config.
+		 */
+		do_action( 'rocket_after_save_import', $regenerate_configs );
 
 		rocket_settings_import_redirect( __( 'Settings imported and saved.', 'rocket' ), 'updated' );
 	}

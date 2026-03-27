@@ -890,6 +890,7 @@ class GeneratePress_Hero {
 			}
 
 			remove_action( 'generate_archive_title', 'generate_archive_title' );
+			remove_filter( 'get_the_archive_title', 'generate_filter_the_archive_title' );
 			add_filter( 'post_class', array( self::$hero, 'remove_hentry' ) );
 		}
 
@@ -935,6 +936,10 @@ class GeneratePress_Hero {
 			$post_title = post_type_archive_title( '', false );
 		} elseif ( is_archive() && function_exists( 'get_the_archive_title' ) ) {
 			$post_title = get_the_archive_title();
+
+			if ( is_author() ) {
+				$post_title = get_the_author();
+			}
 		} elseif ( is_home() ) {
 			$post_title = __( 'Blog', 'gp-premium' );
 		}
@@ -992,7 +997,11 @@ class GeneratePress_Hero {
 				foreach ( $matches[1] as $match ) {
 					if ( null !== get_post_meta( get_the_ID(), $match, true ) && '_thumbnail_id' !== $match ) {
 						$search[] = '{{custom_field.' . $match . '}}';
-						$replace[] = get_post_meta( get_the_ID(), $match, true );
+						$value = get_post_meta( get_the_ID(), $match, true );
+						add_filter( 'wp_kses_allowed_html', [ 'GeneratePress_Elements_Helper', 'expand_allowed_html' ], 10, 2 );
+						$value = wp_kses_post( $value );
+						remove_filter( 'wp_kses_allowed_html', [ 'GeneratePress_Elements_Helper', 'expand_allowed_html' ], 10, 2 );
+						$replace[] = $value;
 					}
 				}
 

@@ -158,6 +158,26 @@ function generatepress_wc_post_class( $classes ) {
 	if ( 'product' === get_post_type() || is_cart() ) {
 		if ( generatepress_wc_get_setting( 'quantity_buttons' ) ) {
 			$classes[] = 'do-quantity-buttons';
+			$product = wc_get_product( get_the_ID() );
+
+			$check_stock = is_callable( array( $product, 'managing_stock' ) ) &&
+				is_callable( array( $product, 'get_stock_quantity' ) ) &&
+				is_callable( array( $product, 'backorders_allowed' ) ) &&
+				is_callable( array( $product, 'is_sold_individually' ) ) &&
+				function_exists( 'is_product' ) &&
+				is_product() &&
+				defined( 'WC_VERSION' );
+
+			if ( $check_stock && version_compare( WC_VERSION, '7.4.0', '>=' ) ) {
+				$managing_stock = $product->managing_stock();
+				$stock_quantity = $product->get_stock_quantity();
+				$backorders_allowed = $product->backorders_allowed();
+				$sold_individually = $product->is_sold_individually();
+
+				if ( $sold_individually || ( $managing_stock && $stock_quantity < 2 && ! $backorders_allowed ) ) {
+					$classes = array_diff( $classes, array( 'do-quantity-buttons' ) );
+				}
+			}
 		}
 	}
 
@@ -199,6 +219,10 @@ add_action( 'wp_enqueue_scripts', 'generatepress_wc_scripts', 100 );
  * @since 1.3
  */
 function generatepress_wc_scripts() {
+	if ( ! function_exists( 'is_checkout' ) ) {
+		return;
+	}
+
 	$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 	wp_enqueue_style( 'generate-woocommerce', plugin_dir_url( __FILE__ ) . "css/woocommerce{$suffix}.css", array(), GENERATE_WOOCOMMERCE_VERSION );
 	wp_enqueue_style( 'generate-woocommerce-mobile', plugin_dir_url( __FILE__ ) . "css/woocommerce-mobile{$suffix}.css", array(), GENERATE_WOOCOMMERCE_VERSION, generate_premium_get_media_query( 'mobile' ) );
@@ -443,10 +467,14 @@ function generatepress_wc_setup() {
  *
  * @since 1.3
  *
- * @param string $sidebar Existing sidebar layout.
+ * @param string $layout Existing sidebar layout.
  * @return string New sidebar layout.
  */
 function generatepress_wc_checkout_sidebar_layout( $layout ) {
+	if ( ! function_exists( 'is_checkout' ) ) {
+		return $layout;
+	}
+
 	if ( is_checkout() ) {
 		return 'no-sidebar';
 	}
@@ -463,6 +491,10 @@ function generatepress_wc_checkout_sidebar_layout( $layout ) {
  * @return int New number of widgets.
  */
 function generatepress_wc_checkout_footer_widgets( $widgets ) {
+	if ( ! function_exists( 'is_checkout' ) ) {
+		return $widgets;
+	}
+
 	if ( is_checkout() ) {
 		return '0';
 	}
@@ -792,9 +824,10 @@ function generatepress_wc_css() {
 	}
 
 	// Primary button.
-	$css->set_selector( '.woocommerce #respond input#submit, .woocommerce a.button, .woocommerce button.button, .woocommerce input.button' );
+	$css->set_selector( '.woocommerce #respond input#submit, .woocommerce a.button, .woocommerce button.button, .woocommerce input.button, .wc-block-components-button' );
 	$css->add_property( 'color', esc_attr( $settings['form_button_text_color'] ) );
 	$css->add_property( 'background-color', esc_attr( $settings['form_button_background_color'] ) );
+	$css->add_property( 'text-decoration', 'none' );
 
 	if ( ! $using_dynamic_typography && isset( $settings['buttons_font_size'] ) ) {
 		$css->add_property( 'font-weight', esc_attr( $settings['buttons_font_weight'] ) );
@@ -810,27 +843,62 @@ function generatepress_wc_css() {
 
 		foreach ( (array) $typography as $key => $data ) {
 			if ( 'buttons' === $data['selector'] ) {
+				$unit = isset( $data['fontSizeUnit'] ) ? $data['fontSizeUnit'] : '';
+
 				if ( ! empty( $data['fontSize'] ) ) {
-					$css->add_property( 'font-size', absint( $data['fontSize'] ), false, 'px' );
+
+					// Check for legacy font size values.
+					// @see https://github.com/tomusborne/generatepress/pull/548.
+					if ( is_numeric( $data['fontSize'] ) ) {
+						$data['fontSize'] = floatval( $data['fontSize'] );
+
+						if ( ! $unit ) {
+							$unit = 'px';
+						}
+					}
+
+					$css->add_property( 'font-size', esc_attr( $data['fontSize'] ), false, $unit );
 				}
 
 				if ( ! empty( $data['fontWeight'] ) ) {
-					$css->add_property( 'font-weight', absint( $data['fontWeight'] ) );
+					$css->add_property( 'font-weight', esc_attr( $data['fontWeight'] ) );
 				}
 
 				if ( ! empty( $data['textTransform'] ) ) {
-					$css->add_property( 'text-transform', absint( $data['textTransform'] ) );
+					$css->add_property( 'text-transform', esc_attr( $data['textTransform'] ) );
 				}
 
 				if ( ! empty( $data['fontSizeTablet'] ) ) {
 					$css->start_media_query( generate_premium_get_media_query( 'tablet' ) );
-					$css->add_property( 'font-size', absint( $data['fontSizeTablet'] ), false, 'px' );
+
+					// Check for legacy font size values.
+					// @see https://github.com/tomusborne/generatepress/pull/548.
+					if ( is_numeric( $data['fontSizeTablet'] ) ) {
+						$data['fontSizeTablet'] = floatval( $data['fontSizeTablet'] );
+
+						if ( ! $unit ) {
+							$unit = 'px';
+						}
+					}
+
+					$css->add_property( 'font-size', esc_attr( $data['fontSizeTablet'] ), false, $unit );
 					$css->stop_media_query();
 				}
 
 				if ( ! empty( $data['fontSizeMobile'] ) ) {
 					$css->start_media_query( generate_premium_get_media_query( 'mobile' ) );
-					$css->add_property( 'font-size', absint( $data['fontSizeMobile'] ), false, 'px' );
+
+					// Check for legacy font size values.
+					// @see https://github.com/tomusborne/generatepress/pull/548.
+					if ( is_numeric( $data['fontSizeMobile'] ) ) {
+						$data['fontSizeMobile'] = floatval( $data['fontSizeMobile'] );
+
+						if ( ! $unit ) {
+							$unit = 'px';
+						}
+					}
+
+					$css->add_property( 'font-size', esc_attr( $data['fontSizeMobile'] ), false, $unit );
 					$css->stop_media_query();
 				}
 			}
@@ -838,7 +906,7 @@ function generatepress_wc_css() {
 	}
 
 	// Primary button hover.
-	$css->set_selector( '.woocommerce #respond input#submit:hover, .woocommerce a.button:hover, .woocommerce button.button:hover, .woocommerce input.button:hover' );
+	$css->set_selector( '.woocommerce #respond input#submit:hover, .woocommerce a.button:hover, .woocommerce button.button:hover, .woocommerce input.button:hover, .wc-block-components-button:hover' );
 	$css->add_property( 'color', esc_attr( $settings['form_button_text_color_hover'] ) );
 	$css->add_property( 'background-color', esc_attr( $settings['form_button_background_color_hover'] ) );
 
@@ -851,6 +919,11 @@ function generatepress_wc_css() {
 	$css->set_selector( '.woocommerce #respond input#submit.alt:hover, .woocommerce a.button.alt:hover, .woocommerce button.button.alt:hover, .woocommerce input.button.alt:hover' );
 	$css->add_property( 'color', esc_attr( $settings['wc_alt_button_text_hover'] ) );
 	$css->add_property( 'background-color', esc_attr( $settings['wc_alt_button_background_hover'] ) );
+
+	// WooBlocks panel button font-size.
+	// We don't want to treat this like a normal button.
+	$css->set_selector( 'button.wc-block-components-panel__button' );
+	$css->add_property( 'font-size', 'inherit' );
 
 	// Star rating.
 	$css->set_selector( '.woocommerce .star-rating span:before, .woocommerce p.stars:hover a::before' );
@@ -1209,7 +1282,7 @@ function generatepress_wc_secondary_product_image() {
 
 		if ( $attachment_ids && generatepress_wc_get_setting( 'product_secondary_image' ) && generatepress_wc_get_setting( 'product_archive_image' ) && has_post_thumbnail() ) {
 			$secondary_image_id = $attachment_ids['0'];
-			echo wp_get_attachment_image( $secondary_image_id, 'shop_catalog', '', $attr = array( 'class' => 'secondary-image attachment-shop-catalog' ) );
+			echo wp_get_attachment_image( $secondary_image_id, 'woocommerce_thumbnail', '', $attr = array( 'class' => 'secondary-image attachment-shop-catalog' ) );
 		}
 	}
 }
@@ -1416,6 +1489,10 @@ function generatepress_add_to_cart_panel_fragments( $fragments ) {
  * @since 1.8
  */
 function generatepress_wc_show_sticky_add_to_cart() {
+	if ( ! function_exists( 'wc_get_product' ) ) {
+		return false;
+	}
+
 	$product = wc_get_product( get_the_ID() );
 	$show = false;
 

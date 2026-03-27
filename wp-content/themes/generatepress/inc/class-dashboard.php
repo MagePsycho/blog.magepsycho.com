@@ -154,11 +154,12 @@ class GeneratePress_Dashboard {
 			<?php
 			foreach ( $tabs as $tab ) {
 				printf(
-					'<a href="%1$s" class="%2$s"%4$s>%3$s</a>',
+					'<a href="%1$s" class="%2$s"%4$s%5$s>%3$s</a>',
 					esc_url( $tab['url'] ),
 					esc_attr( $tab['class'] ),
 					esc_html( $tab['name'] ),
-					! empty( $tab['external'] ) ? 'target="_blank" rel="noreferrer noopener"' : ''
+					! empty( $tab['external'] ) ? 'target="_blank" rel="noreferrer noopener"' : '',
+					esc_attr( ! empty( $tab['id'] ) ? 'id=' . $tab['id'] : '' )
 				);
 			}
 			?>
@@ -204,7 +205,7 @@ class GeneratePress_Dashboard {
 				wp_enqueue_script(
 					'generate-dashboard',
 					get_template_directory_uri() . '/assets/dist/dashboard.js',
-					array( 'wp-api', 'wp-i18n', 'wp-components', 'wp-element', 'wp-api-fetch' ),
+					array( 'wp-api', 'wp-i18n', 'wp-components', 'wp-element', 'wp-api-fetch', 'wp-hooks', 'wp-polyfill' ),
 					GENERATE_VERSION,
 					true
 				);
@@ -217,10 +218,10 @@ class GeneratePress_Dashboard {
 					array(
 						'hasPremium' => defined( 'GP_PREMIUM_VERSION' ),
 						'customizeSectionUrls' => array(
-							'siteIdentitySection' => admin_url( 'customize.php?autofocus[section]=title_tagline' ),
-							'colorsSection' => admin_url( 'customize.php?autofocus[section]=generate_colors_section' ),
-							'typographySection' => admin_url( 'customize.php?autofocus[section]=generate_typography_section' ),
-							'layoutSection' => admin_url( 'customize.php?autofocus[panel]=generate_layout_panel' ),
+							'siteIdentitySection' => add_query_arg( rawurlencode( 'autofocus[section]' ), 'title_tagline', wp_customize_url() ),
+							'colorsSection' => add_query_arg( rawurlencode( 'autofocus[section]' ), 'generate_colors_section', wp_customize_url() ),
+							'typographySection' => add_query_arg( rawurlencode( 'autofocus[section]' ), 'generate_typography_section', wp_customize_url() ),
+							'layoutSection' => add_query_arg( rawurlencode( 'autofocus[panel]' ), 'generate_layout_panel', wp_customize_url() ),
 						),
 					)
 				);

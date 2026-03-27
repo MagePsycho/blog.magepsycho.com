@@ -112,7 +112,7 @@ class GeneratePress_Elements_Helper {
 	public static function should_execute_php() {
 		$php = true;
 
-		if ( defined( 'DISALLOW_FILE_EDIT' ) ) {
+		if ( defined( 'DISALLOW_FILE_EDIT' ) && true === DISALLOW_FILE_EDIT ) {
 			$php = false;
 		}
 
@@ -146,6 +146,13 @@ class GeneratePress_Elements_Helper {
 
 		if ( 'site-footer' === $block_type ) {
 			$block_element->post_content = str_replace( '{{current_year}}', date( 'Y' ), $block_element->post_content ); // phpcs:ignore -- Prefer date().
+		}
+
+		// Handle embeds for block elements.
+		global $wp_embed;
+
+		if ( is_object( $wp_embed ) && method_exists( $wp_embed, 'autoembed' ) ) {
+			$block_element->post_content = $wp_embed->autoembed( $block_element->post_content );
 		}
 
 		return apply_filters( 'generate_do_block_element_content', do_blocks( $block_element->post_content ) );
@@ -185,6 +192,10 @@ class GeneratePress_Elements_Helper {
 
 			case 'content-template':
 				$label = __( 'Content Template', 'gp-premium' );
+				break;
+
+			case 'loop-template':
+				$label = __( 'Loop Template', 'gp-premium' );
 				break;
 
 			case 'post-meta-template':
@@ -488,5 +499,29 @@ class GeneratePress_Elements_Helper {
 		}
 
 		return apply_filters( 'generate_hooks_list', $hooks );
+	}
+
+	/**
+	 * Expand the wp_kses_post sanitization function to allow iframe HTML tags
+	 *
+	 * @param array  $tags The allowed tags, attributes, and/or attribute values.
+	 * @param string $context Context to judge allowed tags by. Allowed values are 'post'.
+	 * @return array
+	 */
+	public static function expand_allowed_html( $tags, $context ) {
+		if ( ! isset( $tags['iframe'] ) ) {
+			$tags['iframe'] = [
+				'src'             => true,
+				'height'          => true,
+				'width'           => true,
+				'frameborder'     => true,
+				'allowfullscreen' => true,
+				'title'           => true,
+			];
+		}
+
+		$tags = apply_filters( 'generate_dynamic_content_allowed_html', $tags, $context );
+
+		return $tags;
 	}
 }

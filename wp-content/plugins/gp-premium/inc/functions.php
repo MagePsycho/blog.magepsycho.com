@@ -107,3 +107,77 @@ function generate_premium_remove_featured_image_class( $classes, $remove_class )
 
 	return $classes;
 }
+
+/**
+ * Returns the global $wp_filesystem with credentials set.
+ * Returns null in case of any errors.
+ *
+ * @return WP_Filesystem_Base|null
+ */
+function generate_premium_get_wp_filesystem() {
+	global $wp_filesystem;
+
+	$success = true;
+
+	// Initialize the file system if it has not been done yet.
+	if ( ! $wp_filesystem ) {
+		require_once ABSPATH . '/wp-admin/includes/file.php';
+
+		$constants = array(
+			'hostname'    => 'FTP_HOST',
+			'username'    => 'FTP_USER',
+			'password'    => 'FTP_PASS',
+			'public_key'  => 'FTP_PUBKEY',
+			'private_key' => 'FTP_PRIKEY',
+		);
+
+		$credentials = array();
+
+		// We provide credentials based on wp-config.php constants.
+		// Reference https://developer.wordpress.org/apis/wp-config-php/#wordpress-upgrade-constants.
+		foreach ( $constants as $key => $constant ) {
+			if ( defined( $constant ) ) {
+				$credentials[ $key ] = constant( $constant );
+			}
+		}
+
+		$success = WP_Filesystem( $credentials );
+	}
+
+	if ( ! $success || $wp_filesystem->errors->has_errors() ) {
+		return null;
+	}
+
+	return $wp_filesystem;
+}
+
+/**
+ * Get our script dependencies and version.
+ *
+ * @param string $filename The filename to use.
+ * @param array  $fallback_assets The assets to fallback to.
+ */
+function generate_premium_get_enqueue_assets(
+	$filename = '',
+	$fallback_assets = array(
+		'dependencies' => array(),
+		'version' => '',
+	)
+) {
+	if ( ! $filename ) {
+		return $fallback_assets;
+	}
+
+	$assets_file = GP_PREMIUM_DIR_PATH . 'dist/' . $filename . '.asset.php';
+	$compiled_assets = file_exists( $assets_file )
+		? require $assets_file
+		: false;
+
+	$assets =
+		isset( $compiled_assets['dependencies'] ) &&
+		isset( $compiled_assets['version'] )
+		? $compiled_assets
+		: $fallback_assets;
+
+	return $assets;
+}

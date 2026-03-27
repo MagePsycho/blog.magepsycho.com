@@ -128,8 +128,13 @@ class GeneratePress_Elements_Metabox {
 	public function scripts( $hook ) {
 		if ( in_array( $hook, array( 'post.php', 'post-new.php' ) ) ) {
 			if ( 'gp_elements' === get_post_type() ) {
-				// Autosave won't save Element type, so we can't have it.
-				wp_dequeue_script( 'autosave' );
+				$element_type = get_post_meta( get_the_ID(), '_generate_element_type', true );
+
+				// Remove autosave when dealing with non-content Elements.
+				// phpcs:ignore -- No data processing happening.
+				if ( 'block' !== $element_type || ( isset( $_GET['element_type'] ) && 'block' !== $_GET['element_type'] ) ) {
+					wp_dequeue_script( 'autosave' );
+				}
 
 				$deps = array( 'jquery' );
 
@@ -211,7 +216,7 @@ class GeneratePress_Elements_Metabox {
 	 */
 	public function register_metabox() {
 		// Title not translated on purpose.
-		add_meta_box( 'generate_premium_elements', 'Element', array( $this, 'element_fields' ), 'gp_elements', 'normal', 'high' );
+		add_meta_box( 'generate_premium_elements', __( 'Display Rules', 'gp-premium' ), array( $this, 'element_fields' ), 'gp_elements', 'normal', 'high' );
 		add_meta_box( 'generate_page_hero_template_tags', __( 'Template Tags', 'gp-premium' ), array( $this, 'template_tags' ), 'gp_elements', 'side', 'low' );
 		remove_meta_box( 'slugdiv', 'gp_elements', 'normal' );
 	}
@@ -274,7 +279,7 @@ class GeneratePress_Elements_Metabox {
 
 				<li data-type="hook" <?php echo ( 'hook' === $type || 'block' === $type ) ? 'class="is-selected" ' : ''; ?>data-tab="hook-settings">
 					<a href="#">
-						<?php echo 'block' === $type ? esc_attr__( 'Display Rules', 'gp-premium' ) : esc_attr__( 'Settings', 'gp-premium' ); ?>
+						<?php echo 'block' === $type ? esc_attr__( 'Rules', 'gp-premium' ) : esc_attr__( 'Settings', 'gp-premium' ); ?>
 					</a>
 				</li>
 

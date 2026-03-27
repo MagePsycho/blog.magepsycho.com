@@ -95,7 +95,7 @@ class GeneratePress_Elements_Post_Type {
 
 		$args = array(
 			'labels'                => $labels,
-			'supports'              => array( 'title', 'editor', 'thumbnail', 'custom-fields', 'page-attributes' ),
+			'supports'              => array( 'title', 'editor', 'thumbnail', 'custom-fields', 'page-attributes', 'revisions' ),
 			'hierarchical'          => true,
 			'public'                => false,
 			'show_ui'               => true,
@@ -142,7 +142,7 @@ class GeneratePress_Elements_Post_Type {
 			}
 
 			if ( 'block' === $type ) {
-				$args['supports'] = array( 'title', 'editor', 'custom-fields', 'page-attributes' );
+				$args['supports'] = array( 'title', 'editor', 'custom-fields', 'page-attributes', 'revisions' );
 			}
 
 			if ( 'layout' === $type ) {
@@ -241,6 +241,7 @@ class GeneratePress_Elements_Post_Type {
 				'site-header',
 				'page-hero',
 				'content-template',
+				'loop-template',
 				'post-meta-template',
 				'post-navigation-template',
 				'archive-navigation-template',

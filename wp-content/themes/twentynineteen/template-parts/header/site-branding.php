@@ -4,7 +4,7 @@
  *
  * @package WordPress
  * @subpackage Twenty_Nineteen
- * @since 1.0.0
+ * @since Twenty Nineteen 1.0
  */
 ?>
 <div class="site-branding">
@@ -13,11 +13,12 @@
 		<div class="site-logo"><?php the_custom_logo(); ?></div>
 	<?php endif; ?>
 	<?php $blog_info = get_bloginfo( 'name' ); ?>
+	<?php $is_front = ! is_paged() && ( is_front_page() || ( is_home() && ( (int) get_option( 'page_for_posts' ) !== get_queried_object_id() ) ) ); ?>
 	<?php if ( ! empty( $blog_info ) ) : ?>
 		<?php if ( is_front_page() && is_home() ) : ?>
-			<h1 class="site-title"><a href="<?php echo esc_url( home_url( '/' ) ); ?>" rel="home"><?php bloginfo( 'name' ); ?></a></h1>
+			<h1 class="site-title"><a href="<?php echo esc_url( home_url( '/' ) ); ?>" rel="home" <?php echo $is_front ? 'aria-current="page"' : ''; ?>><?php bloginfo( 'name' ); ?></a></h1>
 		<?php else : ?>
-			<p class="site-title"><a href="<?php echo esc_url( home_url( '/' ) ); ?>" rel="home"><?php bloginfo( 'name' ); ?></a></p>
+			<p class="site-title"><a href="<?php echo esc_url( home_url( '/' ) ); ?>" rel="home" <?php echo $is_front ? 'aria-current="page"' : ''; ?>><?php bloginfo( 'name' ); ?></a></p>
 		<?php endif; ?>
 	<?php endif; ?>
 
@@ -36,7 +37,7 @@
 				array(
 					'theme_location' => 'menu-1',
 					'menu_class'     => 'main-menu',
-					'items_wrap'     => '<ul id="%1$s" class="%2$s" tabindex="0">%3$s</ul>',
+					'items_wrap'     => '<ul id="%1$s" class="%2$s">%3$s</ul>',
 				)
 			);
 			?>

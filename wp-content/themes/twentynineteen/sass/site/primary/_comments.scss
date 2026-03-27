@@ -7,7 +7,12 @@
 }
 
 .comments-area {
+	-webkit-hyphens: auto;
+	-moz-hyphens: auto;
+	-ms-hyphens: auto;
+	hyphens: auto;
 	margin: calc(2 * #{$size__spacing-unit}) $size__spacing-unit;
+	word-wrap: break-word;
 	@include postContentMaxWidth();
 
 	@include media(tablet) {
@@ -81,6 +86,10 @@
 		top: calc(-3.5 * #{$size__spacing-unit});
 		width: calc(100vw / 12 );
 	}
+
+	.comment-reply-title small {
+		margin-left: 0.5em;
+	}
 }
 
 #comments {
@@ -109,6 +118,11 @@
 	}
 }
 
+.comment-form-wrapper,
+.comment-form-wrapper .comments-title {
+	display: block;
+}
+
 .comment-list {
 	list-style: none;
 	padding: 0;
@@ -127,7 +141,7 @@
 
 		.comment-body {
 			color: $color__text-light;
-			font-family: $font__heading;
+			@include font-family( $font__heading );
 			font-size: $font__size-xs;
 			font-weight: 500;
 			margin-top: $size__spacing-unit;
@@ -143,7 +157,7 @@
 
 			.comment-edit-link {
 				color: $color__text-light;
-				font-family: $font__heading;
+				@include font-family( $font__heading );
 				font-weight: 500;
 			}
 		}
@@ -191,8 +205,10 @@
 
 		.avatar {
 			float: left;
+			height: calc(2.25 * #{$size__spacing-unit});
 			margin-right: $size__spacing-unit;
 			position: relative;
+			width: calc(2.25 * #{$size__spacing-unit});
 
 			@include media(tablet) {
 				float: inherit;
@@ -313,6 +329,7 @@
 
 		a {
 			text-decoration: underline;
+			text-decoration-thickness: 2px;
 
 			&:hover {
 				text-decoration: none;
@@ -372,9 +389,13 @@
 
 	.comment-notes,
 	label {
-		font-family: $font__heading;
+		@include font-family( $font__heading );
 		font-size: $font__size-xs;
 		color: $color__text-light;
+	}
+
+	#wp-comment-cookies-consent {
+		margin: 0 10px 0 0;
 	}
 
 	.comment-form-author,

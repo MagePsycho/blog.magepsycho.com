@@ -176,7 +176,6 @@
 	.wc-columns-container .products,
 	.woocommerce .related ul.products,
 	.woocommerce .up-sells ul.products {
-		display: -ms-grid;
 		display: grid;
 		grid-gap: 50px;
 		width: 100%;
@@ -523,7 +522,7 @@ ul.products .woocommerce-text-align-right {
 	margin-top: 40px;
 }
 
-.woocommerce div.product form.cart,
+.woocommerce div.product.do-quantity-buttons form.cart,
 .add-to-cart-panel form.cart {
 	display: flex;
 	flex-wrap: wrap;
@@ -1272,4 +1271,13 @@ form.checkout:after {
 
 .wc-menu-cart-activated .menu-toggle {
 	text-align: left;
+}
+
+.woocommerce-order-received .woocommerce-customer-details .col2-set {
+	float: none;
+	width: auto;
+}
+
+.woocommerce-order-received .woocommerce-customer-details .col2-set .col-1 {
+	margin-bottom: 1.5em;
 }

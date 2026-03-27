@@ -103,6 +103,10 @@ if ( ! function_exists( 'generate_menu_plus_customize_register' ) ) {
 	 * @param object $wp_customize The Customizer object.
 	 */
 	function generate_menu_plus_customize_register( $wp_customize ) {
+		if ( version_compare( PHP_VERSION, '5.6', '<' ) ) {
+			return;
+		}
+
 		$defaults = generate_menu_plus_get_defaults();
 
 		$settings = wp_parse_args(
@@ -302,7 +306,13 @@ if ( ! function_exists( 'generate_menu_plus_customize_register' ) ) {
 				array(
 					'default' => $defaults['sticky_navigation_logo'],
 					'type' => 'option',
-					'sanitize_callback' => 'esc_url_raw',
+					'sanitize_callback' => function( $input ) {
+						if ( is_numeric( $input ) ) {
+							return absint( $input );
+						}
+
+						return esc_url_raw( $input );
+					},
 				)
 			);
 
@@ -315,7 +325,54 @@ if ( ! function_exists( 'generate_menu_plus_customize_register' ) ) {
 						'section' => 'menu_plus_sticky_menu',
 						'settings' => 'generate_menu_plus_settings[sticky_navigation_logo]',
 						'priority' => 125,
-						'active_callback' => 'generate_sticky_navigation_activated',
+						'active_callback' => function() {
+							if ( ! function_exists( 'generate_menu_plus_get_defaults' ) ) {
+								return false;
+							}
+
+							$settings = wp_parse_args(
+								get_option( 'generate_menu_plus_settings', array() ),
+								generate_menu_plus_get_defaults()
+							);
+
+							return (
+								'' !== $settings['sticky_navigation_logo'] &&
+								! is_numeric( $settings['sticky_navigation_logo'] ) &&
+								'false' !== $settings['sticky_menu']
+							);
+						},
+					)
+				)
+			);
+
+			$wp_customize->add_control(
+				new WP_Customize_Media_Control(
+					$wp_customize,
+					'sticky_navigation_logo',
+					array(
+						'mime_type' => 'image',
+						'label' => esc_html__( 'Sticky Navigation Logo', 'gp-premium' ),
+						'section' => 'menu_plus_sticky_menu',
+						'settings' => 'generate_menu_plus_settings[sticky_navigation_logo]',
+						'priority' => 125,
+						'active_callback' => function() {
+							if ( ! function_exists( 'generate_menu_plus_get_defaults' ) ) {
+								return false;
+							}
+
+							$settings = wp_parse_args(
+								get_option( 'generate_menu_plus_settings', array() ),
+								generate_menu_plus_get_defaults()
+							);
+
+							return (
+								'false' !== $settings['sticky_menu'] &&
+								(
+									'' === $settings['sticky_navigation_logo'] ||
+									is_numeric( $settings['sticky_navigation_logo'] )
+								)
+							);
+						},
 					)
 				)
 			);
@@ -483,7 +540,13 @@ if ( ! function_exists( 'generate_menu_plus_customize_register' ) ) {
 			array(
 				'default' => $defaults['mobile_header_logo'],
 				'type' => 'option',
-				'sanitize_callback' => 'esc_url_raw',
+				'sanitize_callback' => function( $input ) {
+					if ( is_numeric( $input ) ) {
+						return absint( $input );
+					}
+
+					return esc_url_raw( $input );
+				},
 			)
 		);
 
@@ -495,7 +558,55 @@ if ( ! function_exists( 'generate_menu_plus_customize_register' ) ) {
 					'label' => esc_html__( 'Logo', 'gp-premium' ),
 					'section' => $header_section,
 					'settings' => 'generate_menu_plus_settings[mobile_header_logo]',
-					'active_callback' => 'generate_mobile_header_logo_active_callback',
+					'active_callback' => function() {
+						if ( ! function_exists( 'generate_menu_plus_get_defaults' ) ) {
+							return false;
+						}
+
+						$settings = wp_parse_args(
+							get_option( 'generate_menu_plus_settings', array() ),
+							generate_menu_plus_get_defaults()
+						);
+
+						return (
+							'' !== $settings['mobile_header_logo'] &&
+							! is_numeric( $settings['mobile_header_logo'] ) &&
+							'enable' === $settings['mobile_header'] &&
+							'logo' === $settings['mobile_header_branding']
+						);
+					},
+				)
+			)
+		);
+
+		$wp_customize->add_control(
+			new WP_Customize_Media_Control(
+				$wp_customize,
+				'mobile_header_logo',
+				array(
+					'mime_type' => 'image',
+					'label' => esc_html__( 'Logo', 'gp-premium' ),
+					'section' => $header_section,
+					'settings' => 'generate_menu_plus_settings[mobile_header_logo]',
+					'active_callback' => function() {
+						if ( ! function_exists( 'generate_menu_plus_get_defaults' ) ) {
+							return false;
+						}
+
+						$settings = wp_parse_args(
+							get_option( 'generate_menu_plus_settings', array() ),
+							generate_menu_plus_get_defaults()
+						);
+
+						return (
+							'enable' === $settings['mobile_header'] &&
+							'logo' === $settings['mobile_header_branding'] &&
+							(
+								'' === $settings['mobile_header_logo'] ||
+								is_numeric( $settings['mobile_header_logo'] )
+							)
+						);
+					},
 				)
 			)
 		);
@@ -800,7 +911,7 @@ if ( ! function_exists( 'generate_menu_plus_enqueue_js' ) ) {
 		$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 
 		if ( ( 'false' !== $settings['sticky_menu'] ) || ( 'enable' === $settings['mobile_header'] && 'enable' === $settings['mobile_header_sticky'] ) ) {
-			wp_enqueue_script( 'generate-sticky', plugin_dir_url( __FILE__ ) . "js/sticky{$suffix}.js", array( 'jquery' ), GENERATE_MENU_PLUS_VERSION, true );
+			wp_enqueue_script( 'generate-sticky', plugin_dir_url( __FILE__ ) . "js/sticky{$suffix}.js", array( 'jquery-core' ), GENERATE_MENU_PLUS_VERSION, true );
 		}
 
 		if ( 'false' !== $settings['slideout_menu'] ) {
@@ -1145,7 +1256,7 @@ if ( ! function_exists( 'generate_slideout_navigation' ) ) {
 		}
 
 		?>
-		<nav id="generate-slideout-menu" class="main-navigation slideout-navigation<?php echo esc_attr( $overlay ); ?>" <?php echo $microdata; // phpcs:ignore -- No escaping needed. ?> style="display: none;">
+		<nav id="generate-slideout-menu" class="main-navigation slideout-navigation<?php echo esc_attr( $overlay ); ?>" <?php echo $microdata; // phpcs:ignore -- No escaping needed. ?>>
 			<div class="inside-navigation grid-container grid-parent">
 				<?php
 				do_action( 'generate_inside_slideout_navigation' );
@@ -1338,7 +1449,7 @@ if ( ! function_exists( 'generate_menu_plus_slidebar_icon' ) ) {
 			$icon = apply_filters(
 				'generate_off_canvas_toggle_output',
 				sprintf(
-					'<li class="slideout-toggle menu-item-align-right %2$s"><a href="#">%1$s%3$s</a></li>',
+					'<li class="slideout-toggle menu-item-align-right %2$s"><a href="#" role="button">%1$s%3$s</a></li>',
 					$svg_icon,
 					$svg_icon ? 'has-svg-icon' : '',
 					'' !== $settings['off_canvas_desktop_toggle_label'] ? '<span class="off-canvas-toggle-label">' . wp_kses_post( $settings['off_canvas_desktop_toggle_label'] ) . '</span>' : ''
@@ -1398,10 +1509,15 @@ function generate_do_off_canvas_toggle_button() {
 		$icon = apply_filters(
 			'generate_off_canvas_toggle_output',
 			sprintf(
-				'<span class="menu-bar-item slideout-toggle hide-on-mobile %2$s"><a href="#">%1$s%3$s</a></span>',
+				'<span class="menu-bar-item slideout-toggle hide-on-mobile %2$s"><a href="#" role="button"%4$s>%1$s%3$s</a></span>',
 				$svg_icon,
 				$svg_icon ? 'has-svg-icon' : '',
-				'' !== $settings['off_canvas_desktop_toggle_label'] ? '<span class="off-canvas-toggle-label">' . wp_kses_post( $settings['off_canvas_desktop_toggle_label'] ) . '</span>' : ''
+				'' !== $settings['off_canvas_desktop_toggle_label'] ? '<span class="off-canvas-toggle-label">' . wp_kses_post( $settings['off_canvas_desktop_toggle_label'] ) . '</span>' : '',
+				'' === $settings['off_canvas_desktop_toggle_label']
+					? sprintf(
+						' aria-label="%s"',
+						apply_filters( 'generate_off_canvas_button_aria_label', __( 'Open Off-Canvas Panel', 'gp-premium' ) )
+					) : ''
 			)
 		);
 
@@ -1509,7 +1625,14 @@ if ( ! function_exists( 'generate_menu_plus_mobile_header_logo' ) ) {
 		);
 
 		if ( 'logo' === $settings['mobile_header_branding'] && '' !== $settings['mobile_header_logo'] ) {
-			$image = attachment_url_to_postid( $settings['mobile_header_logo'] );
+			if ( is_numeric( $settings['mobile_header_logo'] ) ) {
+				$image = $settings['mobile_header_logo'];
+				$image_url = wp_get_attachment_image_url( $image, 'full' );
+			} else {
+				$image_url = $settings['mobile_header_logo'];
+				$image = attachment_url_to_postid( $image_url );
+			}
+
 			$image_width = '';
 			$image_height = '';
 
@@ -1536,12 +1659,12 @@ if ( ! function_exists( 'generate_menu_plus_mobile_header_logo' ) ) {
 					</div>',
 					esc_url( apply_filters( 'generate_logo_href', home_url( '/' ) ) ),
 					esc_attr( apply_filters( 'generate_logo_title', get_bloginfo( 'name', 'display' ) ) ),
-					esc_url( apply_filters( 'generate_mobile_header_logo', $settings['mobile_header_logo'] ) ),
+					esc_url( apply_filters( 'generate_mobile_header_logo', $image_url ) ),
 					esc_attr( apply_filters( 'generate_logo_title', get_bloginfo( 'name', 'display' ) ) ),
 					! empty( $image_width ) ? absint( $image_width ) : '',
 					! empty( $image_height ) ? absint( $image_height ) : ''
 				),
-				$settings['mobile_header_logo'],
+				$image_url,
 				$image
 			);
 		}
@@ -1598,6 +1721,9 @@ function generate_do_off_canvas_css() {
 
 	require_once GP_LIBRARY_DIRECTORY . 'class-make-css.php';
 	$css = new GeneratePress_Pro_CSS();
+
+	$css->set_selector( ':root' );
+	$css->add_property( '--gp-slideout-width', apply_filters( 'generate_slideout_width', '265px' ) );
 
 	$css->set_selector( '.slideout-navigation.main-navigation' );
 	$css->add_property( 'background-color', esc_attr( $settings['slideout_background_color'] ) );
@@ -2071,8 +2197,13 @@ function generate_do_navigation_branding() {
 				$data = wp_get_attachment_metadata( get_theme_mod( 'custom_logo' ) );
 
 				if ( ! empty( $data ) ) {
-					$attr['width'] = $data['width'];
-					$attr['height'] = $data['height'];
+					if ( isset( $data['width'] ) ) {
+						$attr['width'] = $data['width'];
+					}
+
+					if ( isset( $data['height'] ) ) {
+						$attr['height'] = $data['height'];
+					}
 				}
 			}
 
@@ -2103,7 +2234,14 @@ function generate_do_navigation_branding() {
 	}
 
 	if ( 'false' !== $settings['sticky_menu'] && '' !== $settings['sticky_navigation_logo'] ) {
-		$image = attachment_url_to_postid( $settings['sticky_navigation_logo'] );
+		if ( is_numeric( $settings['sticky_navigation_logo'] ) ) {
+			$image = $settings['sticky_navigation_logo'];
+			$image_url = wp_get_attachment_image_url( $image, 'full' );
+		} else {
+			$image_url = $settings['sticky_navigation_logo'];
+			$image = attachment_url_to_postid( $image_url );
+		}
+
 		$image_width = '';
 		$image_height = '';
 
@@ -2129,11 +2267,11 @@ function generate_do_navigation_branding() {
 				</div>',
 				esc_url( apply_filters( 'generate_logo_href', home_url( '/' ) ) ),
 				esc_attr( apply_filters( 'generate_logo_title', get_bloginfo( 'name', 'display' ) ) ),
-				esc_url( $settings['sticky_navigation_logo'] ),
+				esc_url( $image_url ),
 				! empty( $image_width ) ? absint( $image_width ) : '',
 				! empty( $image_height ) ? absint( $image_height ) : ''
 			),
-			$settings['sticky_navigation_logo'],
+			$image_url,
 			$image
 		);
 	}
@@ -2288,4 +2426,27 @@ function generate_menu_plus_typography_selectors( $selector ) {
 	}
 
 	return $selector;
+}
+
+add_filter( 'generate_parse_attr', 'generate_set_off_canvas_toggle_attributes', 20, 2 );
+/**
+ * Add attributes to our menu-toggle element when using the Off Canvas panel.
+ *
+ * @since 2.2.0
+ * @param array  $attributes The current attributes.
+ * @param string $context The context in which attributes are applied.
+ */
+function generate_set_off_canvas_toggle_attributes( $attributes, $context ) {
+	if ( 'menu-toggle' === $context ) {
+		$settings = wp_parse_args(
+			get_option( 'generate_menu_plus_settings', array() ),
+			generate_menu_plus_get_defaults()
+		);
+
+		if ( 'mobile' === $settings['slideout_menu'] || 'both' === $settings['slideout_menu'] ) {
+			$attributes['aria-controls'] = 'generate-slideout-menu';
+		}
+	}
+
+	return $attributes;
 }

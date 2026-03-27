@@ -67,7 +67,7 @@ if ( ! function_exists( 'generate_license_errors' ) ) {
 
 				case 'false':
 					$message = urldecode( $_GET['message'] );
-					add_settings_error( 'generate-license-notices', 'license_failed', $message, 'error' );
+					add_settings_error( 'generate-license-notices', 'license_failed', esc_html( $message ), 'error' );
 				break;
 
 				case 'true':

@@ -2,10 +2,10 @@
 Contributors: edge22
 Donate link: https://generatepress.com
 Tags: generatepress
-Requires at least: 5.2
-Tested up to: 5.9
-Requires PHP: 5.6
-Stable tag: 2.1.2
+Requires at least: 6.1
+Tested up to: 6.8
+Requires PHP: 7.2
+Stable tag: 2.5.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -26,6 +26,123 @@ To learn how to install GP Premium, check out our documentation [here](https://d
 In most cases, #1 will work fine and is way easier.
 
 == Changelog ==
+
+= 2.5.5 =
+* Feature: Add GPP/GP One Site Library filters
+
+= 2.5.4 =
+* Tweak: Enable smooth device transition in Elements editor
+
+= 2.5.3 =
+* Fix: Layout Element full width editor
+
+= 2.5.2 =
+* Fix: Customizer notice placements
+
+= 2.5.1 =
+* Feature: Serve new GenerateBlocks 2.0 sites in the Site Library
+* Feature: Add more GenerateBlocks 2.0 dynamic tags if GB Pro is not active
+* Feature: Add support for Font Library when importing starter sites
+* Fix: Missing Elements Display Rules in some configurations
+
+= 2.5.0 =
+* Feature: Font Library
+* Feature: Install Google Fonts locally
+* Feature: Upload custom fonts locally
+* Fix: Apply button color settings to WooCommerce block buttons
+* Fix: WooCommerce button typography
+* Fix: Check if `DISALLOW_FILE_EDIT` is set to true for PHP Elements
+* Fix: Use up to date react render functions
+* Tweak: Allow Display Rules metabox to collapse
+* Accessibility: Add aria-label to secondary navigation
+
+= 2.4.1 =
+* Security: Harden variable against XSS attacks
+
+= 2.4.0 =
+* Security: Disallow scripts in custom field template tags
+* Important: Requires PHP 7.2 or greater
+* Feature: Improve Site Library filters
+* Feature: Add search capability in Site Library
+* Feature: Allow author searching in Site Library
+* Feature: Add `generate_smooth_scroll_offset` filter
+* Feature: Use built-in read more text filters
+* Fix: PHP 8.1 notices
+* Fix: Display posts in columns option changes Query Loop blocks
+* Fix: Remove no-csstransforms3d CSS from off canvas panel
+* Fix: Display Rules taxonomies missing when has_archive disabled
+* Fix: Navigation logo undefined array keys
+* Tweak: Update Content Template templates
+* Tweak: Update Archive Navigation templates
+* Tweak: Update Page Hero templates
+* Tweak: Update post meta templates
+* Tweak: Update post navigation templates
+* Tweak: Update site footer templates
+* Tweak: Remove deprecated filter_input functions
+* General: Updated translations
+
+= 2.3.2 =
+* Tweak: Remove deprecated wp_get_loading_attr_default function
+
+= 2.3.1 =
+* Fix: SelectSearch component infinite loop
+* Fix: Block widths inside Block Elements
+
+= 2.3.0 =
+* Feature: Add Search Modal Element type
+* Fix: Inline post meta feature in GenerateBlocks 1.7
+* Fix: Close "Choose Element Type" modal with ESC key
+* Fix: Replace WooCommerce secondary image attachment size
+* Fix: WP Filesystem error missing credentials
+* Fix: Undefined array keys in dynamic Container URL
+* Fix: Author avatar in Header/Block Element titles
+* Fix: Infinite loop error when autosaving with dynamic content block
+* Fix: Add aria-label to off-canvas panel button
+* Fix: WooCommerce button dynamic typography
+* Fix: Empty WooCommerce quantity fields
+* Fix: PHP 8.1 notice using disable elements in Customizer
+* Tweak: Improve license key area
+* Tweak: Improve off-canvas transitions
+* Tweak: Check for WooCommerce functions
+* Tweak: Open off-canvas using space bar
+* Tweak: Use image ID in mobile header/sticky nav logos
+* Tweak: Improve Elements hook selection dropdown UI
+* Tweak: Add site library check for min GenerateBlocks version
+* Tweak: Add Loop Template to Custom Post Type dropdown filters
+
+= 2.2.2 =
+* Fix: Off Canvas anchor links not working
+
+= 2.2.1 =
+* Fix: Add value to off-canvas aria-hidden attribute
+* Tweak: Remove/add aria-hidden to off-canvas on toggle
+
+= 2.2.0 =
+* Feature: Allow block element autosave
+* Feature: Add revisions to block elements
+* Feature: Add Loop Template block element
+* Feature: Dont display the raw license key in the Dashboard
+* Feature: Add "Paginated Results" to Element Display Rules
+* Fix: Element post navigation template PHP warning when not using GB Pro
+* Fix: Remove unnecessary zoom CSS from featured images
+* Fix: Font icon CSS order
+* Fix: Load more button showing in product tax archives
+* Fix: Prevent tabbing in hidden off-canvas panel
+* Fix: Hide hidden off-canvas panel from screen readers
+* Fix: menu-toggle aria-controls when using off-canvas panel
+* Fix: Focus first focusable element when opening off-canvas panel
+* Fix: Focus slideout toggle when closing off-canvas panel
+* Fix: Off-Canvas Panel sub-menu a11y
+* Fix: Prevent secondary nav legacy typography CSS
+* Fix: Fix dynamic term meta link
+* Fix: Block margins in the block element editor
+* Fix: Embeds in Block Elements
+* Fix: Apply display rules to editor with no ID
+* Fix: Navigation background image applying to secondary nav
+* Fix: WooCommerce order received page float issue
+* Fix: Block element editor error in GenerateBlocks 1.7
+* Tweak: Remove jquery-migrate from sticky script
+* Tweak: Add message in Blog section about Loop Template
 
 = 2.1.2 =
 * Elements: Fix custom field value in dynamic container links

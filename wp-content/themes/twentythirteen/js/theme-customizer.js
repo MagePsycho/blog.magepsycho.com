@@ -20,18 +20,18 @@
 	// Header text color.
 	wp.customize( 'header_textcolor', function( value ) {
 		value.bind( function( to ) {
-			if ( 'blank' == to ) {
-				if ( 'remove-header' == wp.customize.instance( 'header_image' ).get() ) {
+			if ( 'blank' === to ) {
+				if ( 'remove-header' === wp.customize.instance( 'header_image' ).get() ) {
 					$( '.home-link' ).css( 'min-height', '0' );
 				}
 				$( '.site-title, .site-description' ).css( {
-					'clip': 'rect(1px, 1px, 1px, 1px)',
+					'clip-path': 'inset(50%)',
 					'position': 'absolute'
 				} );
 			} else {
 				$( '.home-link' ).css( 'min-height', '230px' );
 				$( '.site-title, .site-description' ).css( {
-					'clip': 'auto',
+					'clip-path': 'none',
 					'color': to,
 					'position': 'relative'
 				} );

@@ -274,7 +274,7 @@ if ( ! function_exists( 'generate_customize_register' ) ) {
 
 					return $new_settings;
 				},
-				'transport' => 'refresh',
+				'transport' => 'postMessage',
 			),
 			array(
 				'type' => 'generate-color-manager-control',
@@ -304,6 +304,7 @@ if ( ! function_exists( 'generate_customize_register' ) ) {
 		require_once $fields_dir . '/footer-widgets.php';
 		require_once $fields_dir . '/footer-bar.php';
 		require_once $fields_dir . '/back-to-top.php';
+		require_once $fields_dir . '/search-modal.php';
 
 		do_action( 'generate_customize_after_controls', $wp_customize );
 
@@ -440,21 +441,23 @@ if ( ! function_exists( 'generate_customize_register' ) ) {
 						'fontFamily' => 'sanitize_text_field',
 						'fontWeight' => 'sanitize_text_field',
 						'textTransform' => 'sanitize_text_field',
-						'fontSize' => 'generate_sanitize_empty_decimal_integer',
-						'fontSizeTablet' => 'generate_sanitize_empty_decimal_integer',
-						'fontSizeMobile' => 'generate_sanitize_empty_decimal_integer',
+						'textDecoration' => 'sanitize_text_field',
+						'fontStyle' => 'sanitize_text_field',
+						'fontSize' => 'sanitize_text_field',
+						'fontSizeTablet' => 'sanitize_text_field',
+						'fontSizeMobile' => 'sanitize_text_field',
 						'fontSizeUnit' => 'sanitize_text_field',
-						'lineHeight' => 'generate_sanitize_empty_decimal_integer',
-						'lineHeightTablet' => 'generate_sanitize_empty_decimal_integer',
-						'lineHeightMobile' => 'generate_sanitize_empty_decimal_integer',
+						'lineHeight' => 'sanitize_text_field',
+						'lineHeightTablet' => 'sanitize_text_field',
+						'lineHeightMobile' => 'sanitize_text_field',
 						'lineHeightUnit' => 'sanitize_text_field',
-						'letterSpacing' => 'generate_sanitize_empty_negative_decimal_integer',
-						'letterSpacingTablet' => 'generate_sanitize_empty_negative_decimal_integer',
-						'letterSpacingMobile' => 'generate_sanitize_empty_negative_decimal_integer',
+						'letterSpacing' => 'sanitize_text_field',
+						'letterSpacingTablet' => 'sanitize_text_field',
+						'letterSpacingMobile' => 'sanitize_text_field',
 						'letterSpacingUnit' => 'sanitize_text_field',
-						'marginBottom' => 'generate_sanitize_empty_decimal_integer',
-						'marginBottomTablet' => 'generate_sanitize_empty_decimal_integer',
-						'marginBottomMobile' => 'generate_sanitize_empty_decimal_integer',
+						'marginBottom' => 'sanitize_text_field',
+						'marginBottomTablet' => 'sanitize_text_field',
+						'marginBottomMobile' => 'sanitize_text_field',
 						'marginBottomUnit' => 'sanitize_text_field',
 						'module' => 'sanitize_text_field',
 						'group' => 'sanitize_text_field',
@@ -1007,6 +1010,31 @@ if ( ! function_exists( 'generate_customize_register' ) ) {
 				),
 				'settings' => 'generate_settings[nav_search]',
 				'priority' => 23,
+				'active_callback' => function() {
+					return 'enable' === generate_get_option( 'nav_search' ) || 'floats' === generate_get_option( 'structure' ) || 'font' === generate_get_option( 'icons' );
+				},
+			)
+		);
+
+		$wp_customize->add_setting(
+			'generate_settings[nav_search_modal]',
+			array(
+				'default' => $defaults['nav_search_modal'],
+				'type' => 'option',
+				'sanitize_callback' => 'generate_sanitize_checkbox',
+			)
+		);
+
+		$wp_customize->add_control(
+			'generate_settings[nav_search_modal]',
+			array(
+				'type' => 'checkbox',
+				'label' => esc_html__( 'Enable navigation search modal', 'generatepress' ),
+				'section' => 'generate_layout_navigation',
+				'priority' => 23,
+				'active_callback' => function() {
+					return 'disable' === generate_get_option( 'nav_search' ) && 'flexbox' === generate_get_option( 'structure' ) && 'svg' === generate_get_option( 'icons' );
+				},
 			)
 		);
 

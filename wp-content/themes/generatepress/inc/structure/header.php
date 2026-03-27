@@ -112,31 +112,24 @@ if ( ! function_exists( 'generate_construct_logo' ) ) {
 				'class' => 'header-image is-logo-image',
 				'alt'   => esc_attr( apply_filters( 'generate_logo_title', get_bloginfo( 'name', 'display' ) ) ),
 				'src'   => $logo_url,
-				'title' => esc_attr( apply_filters( 'generate_logo_title', get_bloginfo( 'name', 'display' ) ) ),
 			)
 		);
 
+		$data = get_theme_mod( 'custom_logo' ) && ( '' !== $retina_logo_url || generate_is_using_flexbox() )
+			? wp_get_attachment_metadata( get_theme_mod( 'custom_logo' ) )
+			: false;
+
 		if ( '' !== $retina_logo_url ) {
 			$attr['srcset'] = $logo_url . ' 1x, ' . $retina_logo_url . ' 2x';
+		}
 
-			// Add dimensions to image if retina is set. This fixes a container width bug in Firefox.
-			if ( function_exists( 'the_custom_logo' ) && get_theme_mod( 'custom_logo' ) ) {
-				$data = wp_get_attachment_metadata( get_theme_mod( 'custom_logo' ) );
-
-				if ( ! empty( $data ) ) {
-					$attr['width'] = $data['width'];
-					$attr['height'] = $data['height'];
-				}
+		if ( $data ) {
+			if ( isset( $data['width'] ) ) {
+				$attr['width'] = $data['width'];
 			}
-		} elseif ( generate_is_using_flexbox() ) {
-			// Add this to flexbox version only until we can verify it won't conflict with existing installs.
-			if ( function_exists( 'the_custom_logo' ) && get_theme_mod( 'custom_logo' ) ) {
-				$data = wp_get_attachment_metadata( get_theme_mod( 'custom_logo' ) );
 
-				if ( ! empty( $data ) ) {
-					$attr['width'] = $data['width'];
-					$attr['height'] = $data['height'];
-				}
+			if ( isset( $data['height'] ) ) {
+				$attr['height'] = $data['height'];
 			}
 		}
 
@@ -152,12 +145,11 @@ if ( ! function_exists( 'generate_construct_logo' ) ) {
 			'generate_logo_output',
 			sprintf(
 				'<div class="site-logo">
-					<a href="%1$s" title="%2$s" rel="home">
-						<img %3$s />
+					<a href="%1$s" rel="home">
+						<img %2$s />
 					</a>
 				</div>',
 				esc_url( apply_filters( 'generate_logo_href', home_url( '/' ) ) ),
-				esc_attr( apply_filters( 'generate_logo_title', get_bloginfo( 'name', 'display' ) ) ),
 				$html_attr
 			),
 			$logo_url,
@@ -202,9 +194,7 @@ if ( ! function_exists( 'generate_construct_site_title' ) ) {
 			'generate_site_title_output',
 			sprintf(
 				'<%1$s class="main-title"%4$s>
-					<a href="%2$s" rel="home">
-						%3$s
-					</a>
+					<a href="%2$s" rel="home">%3$s</a>
 				</%1$s>',
 				( is_front_page() && is_home() ) ? 'h1' : 'p',
 				esc_url( apply_filters( 'generate_site_title_href', home_url( '/' ) ) ),
@@ -217,9 +207,7 @@ if ( ! function_exists( 'generate_construct_site_title' ) ) {
 		$site_tagline = apply_filters(
 			'generate_site_description_output',
 			sprintf(
-				'<p class="site-description"%2$s>
-					%1$s
-				</p>',
+				'<p class="site-description"%2$s>%1$s</p>',
 				html_entity_decode( get_bloginfo( 'description', 'display' ) ), // phpcs:ignore
 				'microdata' === generate_get_schema_type() ? ' itemprop="description"' : ''
 			)

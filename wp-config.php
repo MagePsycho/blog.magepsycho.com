@@ -1,96 +1,59 @@
 <?php
-define('WP_CACHE', true); // Added by WP Rocket
+define( 'WP_CACHE', true ); // Added by WP Rocket
 /**
  * The base configuration for WordPress
  *
- * The wp-config.php creation script uses this file during the installation.
- * You don't have to use the web site, you can copy this file to "wp-config.php"
- * and fill in the values.
- *
- * This file contains the following configurations:
- *
- * * Database settings
- * * Secret keys
- * * Database table prefix
- * * ABSPATH
- *
  * @link https://wordpress.org/support/article/editing-wp-config-php/
- *
  * @package WordPress
  */
 
-// ** Database settings - You can get this info from your web host ** //
-/** The name of the database for WordPress */
-define( 'DB_NAME', 'wordpress' );
-
-/** Database username */
-define( 'DB_USER', 'wordpress' );
-
-/** Database password */
-define( 'DB_PASSWORD', 'wordpress' );
-
-/** Database hostname */
-define( 'DB_HOST', 'db' );
-
-/** Database charset to use in creating database tables. */
+// ** Database settings ** //
+define( 'DB_NAME', 'magepsycho_blog' );
+define( 'DB_USER', 'magepsycho_blog' );
+define( 'DB_PASSWORD', 'ohZDxCSZeNJJHTlDQozyMtEpe9n6xkyH' );
+define( 'DB_HOST', 'localhost' );
 define( 'DB_CHARSET', 'utf8' );
-
-/** The database collate type. Don't change this if in doubt. */
 define( 'DB_COLLATE', '' );
 
-/**#@+
+/**
  * Authentication unique keys and salts.
- *
- * Change these to different unique phrases! You can generate these using
- * the {@link https://api.wordpress.org/secret-key/1.1/salt/ WordPress.org secret-key service}.
- *
- * You can change these at any point in time to invalidate all existing cookies.
- * This will force all users to have to log in again.
- *
- * @since 2.6.0
  */
-define( 'AUTH_KEY',         'put your unique phrase here' );
-define( 'SECURE_AUTH_KEY',  'put your unique phrase here' );
-define( 'LOGGED_IN_KEY',    'put your unique phrase here' );
-define( 'NONCE_KEY',        'put your unique phrase here' );
-define( 'AUTH_SALT',        'put your unique phrase here' );
-define( 'SECURE_AUTH_SALT', 'put your unique phrase here' );
-define( 'LOGGED_IN_SALT',   'put your unique phrase here' );
-define( 'NONCE_SALT',       'put your unique phrase here' );
-
-/**#@-*/
+define( 'AUTH_KEY',         'S75JqMfi00hU9uC+/jAi2co03JTVeQuCn2nwwU78dP7Bnv/XiLSFD3eU6Deryj6E' );
+define( 'SECURE_AUTH_KEY',  '7XimcoN6l482WeeQit3p+CDS82CAZEYvjYgXWTYft9g4hd0BLNZvvK5Iqdz3FlcF' );
+define( 'LOGGED_IN_KEY',    '6LMbIXUNcC06VqE6+Un+a4YoHFLofbEZ9Hv8/no6lKsyum0FmUgPFotIfXdsTvDO' );
+define( 'NONCE_KEY',        'AGsZ+q+uG8lM4AbWbaZO4giYTyAtnd5XAI/QeBPu8dYk6CKiEvq6dkxk4s4YfGiy' );
+define( 'AUTH_SALT',        'D2tvAJouw/W1wqVXQ+z5/iKUBNsynOBDKSSETX0K68uaKg3uiWpuZcJdqV3xD6pv' );
+define( 'SECURE_AUTH_SALT', 'eOED8uG6eZdw8m0RmDkxlcxg9GryHMZuQ/+I55A/W7L4bPncLi221+JFSGFHGH/9' );
+define( 'LOGGED_IN_SALT',   'bsK0REEOa2YQsEWmAwTGMK1KYnOvaqBRScmKEEsnmc2vRrZ+8ufziD6pQUw6ejZE' );
+define( 'NONCE_SALT',       'm19EG0gHq7E2IhJdgByIsSm04Zneh+8kyz44czaM/hpThgpEbS9WVnGmPPmF6+SE' );
 
 /**
  * WordPress database table prefix.
- *
- * You can have multiple installations in one database if you give each
- * a unique prefix. Only numbers, letters, and underscores please!
  */
 $table_prefix = 'mpb_';
 
 /**
- * For developers: WordPress debugging mode.
- *
- * Change this to true to enable the display of notices during development.
- * It is strongly recommended that plugin and theme developers use WP_DEBUG
- * in their development environments.
- *
- * For information on other constants that can be used for debugging,
- * visit the documentation.
- *
- * @link https://wordpress.org/support/article/debugging-in-wordpress/
+ * Production settings
  */
-define( 'WP_DEBUG', false );
+define( 'WP_DEBUG', true );
+define( 'WP_DEBUG_LOG', true );
+define( 'WP_DEBUG_DISPLAY', false );
+define( 'DISALLOW_FILE_EDIT', true );
 
-/* Add any custom values between this line and the "stop editing" line. */
+/** Force HTTPS */
+define( 'FORCE_SSL_ADMIN', true );
+if ( isset( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https' ) {
+    $_SERVER['HTTPS'] = 'on';
+}
 
-
+define( 'WP_HOME', 'https://blog.magepsycho.com' );
+define( 'WP_SITEURL', 'https://blog.magepsycho.com' );
 
 /* That's all, stop editing! Happy publishing. */
 
 /** Absolute path to the WordPress directory. */
 if ( ! defined( 'ABSPATH' ) ) {
-	define( 'ABSPATH', __DIR__ . '/' );
+    define( 'ABSPATH', __DIR__ . '/' );
 }
 
 /** Sets up WordPress vars and included files. */

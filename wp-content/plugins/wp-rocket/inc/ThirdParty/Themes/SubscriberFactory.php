@@ -3,9 +3,7 @@ declare(strict_types=1);
 
 namespace WP_Rocket\ThirdParty\Themes;
 
-use WP_Rocket\ThirdParty\SubscriberFactoryInterface;
-
-class SubscriberFactory implements SubscriberFactoryInterface {
+class SubscriberFactory {
 	/**
 	 * Get a theme subscriber data
 	 *
@@ -49,7 +47,7 @@ class SubscriberFactory implements SubscriberFactoryInterface {
 					'class'     => Jevelin::class,
 					'arguments' => [],
 				];
-			case 'minimalist_blogger':
+			case 'minimalistblogger':
 				return [
 					'class'     => MinimalistBlogger::class,
 					'arguments' => [],
@@ -79,6 +77,11 @@ class SubscriberFactory implements SubscriberFactoryInterface {
 			case 'shoptimizer':
 				return [
 					'class'     => Shoptimizer::class,
+					'arguments' => [],
+				];
+			case 'generatepress':
+				return [
+					'class'     => GeneratePress::class,
 					'arguments' => [],
 				];
 			default:
